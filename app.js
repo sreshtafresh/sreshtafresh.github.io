@@ -40,6 +40,7 @@
   function r3(x) { return Math.round(x * 1000) / 1000; }
   function rs(n) { return '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
   function q(n) { return Number(r3(n || 0)).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+  function newReqId() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
   function phone10(v) { var p = String(v || '').replace(/\D/g, ''); if (p.length > 10) p = p.slice(-10); return p.length === 10 ? p : ''; }
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -199,6 +200,7 @@
     qty = floorStep(Math.max(0, qty), it.step);
     if (qty > it.left + 1e-9) { qty = floorStep(it.left, it.step); toast('Only ' + q(it.left) + ' ' + unitTxt(it.unit, it.left) + ' ' + it.item + ' left.', true); }
     if (qty <= 0) delete CART[key]; else CART[key] = qty;
+    FORM.reqId = '';   // a changed basket is a new order
     store('sf_cart', CART);
     renderGrid();
     updateBasketBar();
@@ -320,11 +322,14 @@
     var keys = cartKeys();
     if (!keys.length) return;
     var btn = $('placeBtn');
+    if (btn.disabled) return;
     btn.disabled = true;
     btn.textContent = 'Placing your order…';
     $('bk-err').innerHTML = '';
+    // Same code on a retry, so the shop never creates the order twice.
+    FORM.reqId = FORM.reqId || newReqId();
     apiPost({
-      action: 'placeOrder', phone: c.phone, name: c.name, flat: c.flat, apartment: c.apartment,
+      action: 'placeOrder', reqId: FORM.reqId, phone: c.phone, name: c.name, flat: c.flat, apartment: c.apartment,
       fulfilment: FORM.fulfilment, notes: FORM.notes,
       items: keys.map(function (k) { return { key: k, qty: CART[k] }; })
     }).then(function (r) {
@@ -334,6 +339,7 @@
         CART = {};
         store('sf_cart', CART);
         FORM.notes = '';
+        FORM.reqId = '';
         closeSheet();
         location.hash = '#done';
         refresh();
@@ -378,10 +384,12 @@
     var kg = Math.round((Number($('pr-kg').value) || 0) * 2) / 2;
     if (kg < 0.5) return toast('Choose at least 0.5 kg.', true);
     var btn = $('preBtn');
+    if (btn.disabled) return;
     btn.disabled = true;
     btn.textContent = 'Reserving…';
+    if (PRE.reqKg !== kg) { PRE.reqId = newReqId(); PRE.reqKg = kg; }
     apiPost({
-      action: 'preOrder', phone: c.phone, name: c.name, flat: c.flat, apartment: c.apartment,
+      action: 'preOrder', reqId: PRE.reqId, phone: c.phone, name: c.name, flat: c.flat, apartment: c.apartment,
       kg: kg, fulfilment: PRE.fulfilment, notes: $('pr-notes').value.trim()
     }).then(function (r) {
       if (!r.ok) {
@@ -390,6 +398,7 @@
         btn.textContent = 'Reserve chicken';
         return;
       }
+      PRE.reqId = ''; PRE.reqKg = null;
       closeSheet();
       showSheet('<div class="done-top"><div class="tick">✓</div><h2>Chicken reserved!</h2><div class="oid">' + q(r.preorder.kg) + ' kg for ' + fmtD(r.preorder.sunday) + '</div></div>' +
         '<div class="payinfo">We\'ll weigh it on Sunday and send you the bill. Pay by Cash or PhonePe when you receive it.</div>' +
@@ -429,13 +438,35 @@
     var o = LAST;
     if (!o) { location.hash = ''; return; }
     var s = shop();
-    $('view-done').innerHTML = '<div class="done-top"><div class="tick">✓</div><h2>Order placed!</h2><div class="oid">Order ' + esc(o.id) + '</div></div>' +
-      (s.afterCutoff ? '<div class="note">🌙 It\'s late, so we\'ll pack this tomorrow morning.</div>' : '') +
-      '<div class="card">' + track(o) + '<div class="hint" style="text-align:center;margin-bottom:8px">We\'ll message you on WhatsApp when it\'s packed and ready.</div>' + orderLines(o) + '</div>' +
+    var head = { Placed: 'Order placed!', Packed: 'Packed & ready! 📦', Completed: 'Received. Thank you! 🌿', Cancelled: 'Order cancelled' }[o.status] || 'Order placed!';
+    var msg = {
+      Placed: 'We\'ll message you on WhatsApp when it\'s packed and ready.',
+      Packed: 'Your order is ready for pickup. If you can\'t come, we\'ll deliver it.',
+      Completed: 'Hope you enjoy it!',
+      Cancelled: 'This order was cancelled.'
+    }[o.status] || '';
+    $('view-done').innerHTML = '<div class="done-top"><div class="tick"' + (o.status === 'Cancelled' ? ' style="background:var(--red)">✕' : '>✓') + '</div><h2>' + head + '</h2><div class="oid">Order ' + esc(o.id) + '</div></div>' +
+      (s.afterCutoff && o.status === 'Placed' ? '<div class="note">🌙 It\'s late, so we\'ll pack this tomorrow morning.</div>' : '') +
+      '<div class="card">' + track(o) + '<div class="hint" style="text-align:center;margin-bottom:8px">' + msg + '</div>' + orderLines(o) + '</div>' +
       '<div class="payinfo">💵 Pay by Cash or PhonePe when you receive it.</div>' +
       '<div class="actions">' + contactButtons('Hi! I just placed order ' + o.id + ' (' + rs(o.total) + ') on the website.') +
       '<a class="btn ghost big wide" href="' + payUrl(o) + '">Pay now by PhonePe / UPI (optional)</a>' +
       '<div class="row2"><a class="btn big" href="#orders">🧾 My orders</a><a class="btn big" href="#">🛒 Shop more</a></div></div>';
+  }
+
+  /** Keeps the "Order placed" page in step with the shop (Placed → Packed → Received). */
+  var doneBusy = false;
+  function pollDone() {
+    if (doneBusy || !LAST || !LAST.phone) return;
+    doneBusy = true;
+    apiGet({ api: 'orders', phone: LAST.phone }).then(function (r) {
+      var o = r.ok && r.data.orders.filter(function (x) { return x.id === LAST.id; })[0];
+      if (o && (o.status !== LAST.status || o.payment !== LAST.payment)) {
+        LAST = o;
+        store('sf_last', LAST);
+        if (VIEW === 'done') renderDone();
+      }
+    }).catch(function () { /* try again next tick */ }).then(function () { doneBusy = false; });
   }
 
   // ---------- my orders ----------
@@ -575,6 +606,7 @@
     if (document.hidden) return;
     refresh();
     if (VIEW === 'orders' && MO.phone) loadMyOrders(true);
+    if (VIEW === 'done') pollDone();
   }, POLL_MS);
   setInterval(tick, 1000);
 })();
