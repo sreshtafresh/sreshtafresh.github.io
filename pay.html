@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pay · Sreshta Fresh</title>
+  <meta name="theme-color" content="#015c30">
+  <link rel="icon" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .pay { max-width: 440px; margin: 0 auto; text-align: center; }
+    .amount { font-family: "Baloo 2", sans-serif; font-size: 46px; font-weight: 800; color: var(--green); line-height: 1; margin: 6px 0 2px; }
+    .qr { display: inline-block; background: #fff; padding: 14px; border-radius: 18px; box-shadow: var(--shadow); margin: 14px 0 6px; border: 3px solid var(--gold); }
+    .qr img, .qr canvas { display: block; width: 220px !important; height: 220px !important; }
+    .upi { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; margin: 10px 0 2px; }
+    .steps { text-align: left; font-size: 14.5px; color: var(--muted); margin: 0; padding-left: 20px; }
+    .steps li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a href="./" class="brand"><img src="logo.png" alt="Sreshta Fresh by Sreshta Farms"></a>
+    <a href="./#orders" class="pill-btn">🧾 My orders</a>
+  </header>
+  <main>
+    <div class="pay" id="pay"></div>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="config.js"></script>
+  <script>
+  (function () {
+    var CFG = window.SF_CONFIG || {};
+    var p = new URLSearchParams(location.search);
+    var orderId = (p.get('o') || '').slice(0, 40);
+    var amount = Math.round(Number(p.get('a')) * 100) / 100;
+    var box = document.getElementById('pay');
+
+    function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function toast(m) { var t = document.getElementById('toast'); t.textContent = m; t.className = 'toast show'; setTimeout(function () { t.className = 'toast'; }, 2200); }
+
+    function render(upi, name) {
+      if (!(amount > 0)) {
+        box.innerHTML = '<h2 style="margin:20px 0 8px">Payment link not valid</h2><p>Please use the link from your bill, or contact us.</p><a class="btn green big" href="./">Go to shop</a>';
+        return;
+      }
+      var link = 'upi://pay?pa=' + encodeURIComponent(upi) + '&pn=' + encodeURIComponent(name) + '&am=' + amount.toFixed(2) +
+        '&cu=INR' + (orderId ? '&tn=' + encodeURIComponent('Order ' + orderId) : '');
+      box.innerHTML =
+        '<div class="card" style="margin-top:6px"><div class="oid">' + (orderId ? 'Order ' + esc(orderId) : 'Payment') + '</div>' +
+        '<div class="amount">₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: amount % 1 ? 2 : 0 }) + '</div>' +
+        '<div class="hint">to ' + esc(name) + '</div>' +
+        '<a class="btn green big wide" style="margin-top:14px" href="' + link + '">Pay ₹' + amount + ' with PhonePe / GPay / any UPI app</a>' +
+        '<div class="qr" id="qr"></div>' +
+        '<div class="hint">Or scan this QR code with any UPI app</div>' +
+        '<div class="upi">UPI ID: <span id="upiId">' + esc(upi) + '</span> <button class="btn" id="copy" style="padding:6px 10px;font-size:13px">Copy</button></div>' +
+        '<a class="btn ghost wide" id="save" style="margin-top:10px" download="sreshta-fresh-pay-' + esc(orderId || 'qr') + '.png">⬇ Save QR to gallery</a></div>' +
+        '<div class="card"><b>Paying from this same phone?</b><ol class="steps">' +
+        '<li>Tap the green <b>Pay</b> button above, or</li>' +
+        '<li>Tap <b>Save QR</b>, open PhonePe → <b>Scan</b> → choose the photo from your gallery.</li>' +
+        '<li>Check the amount is <b>₹' + amount + '</b> and pay. That\'s it. We\'ll mark your order paid.</li></ol></div>' +
+        '<a class="btn big wide" href="./">← Back to shop</a>';
+
+      new QRCode(document.getElementById('qr'), { text: link, width: 440, height: 440, colorDark: '#013d20', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      setTimeout(function () {
+        var c = document.querySelector('#qr canvas'), img = document.querySelector('#qr img');
+        var src = c ? c.toDataURL('image/png') : img && img.src;
+        if (src) document.getElementById('save').href = src;
+      }, 300);
+      document.getElementById('copy').onclick = function () {
+        (navigator.clipboard ? navigator.clipboard.writeText(upi) : Promise.reject()).then(function () { toast('UPI ID copied'); }, function () { toast(upi); });
+      };
+    }
+
+    // Use the live UPI ID from the shop's settings; fall back to config.js.
+    var api = CFG.API_URL && !/PASTE_/.test(CFG.API_URL) ? CFG.API_URL : '';
+    var fallback = function () { render(CFG.UPI_ID, CFG.SHOP_NAME || 'Sreshta Fresh'); };
+    if (!api) return fallback();
+    var done = false, timer = setTimeout(function () { if (!done) { done = true; fallback(); } }, 4000);
+    fetch(api + '?api=catalog&t=' + Date.now()).then(function (r) { return r.json(); }).then(function (r) {
+      if (done) return;
+      done = true; clearTimeout(timer);
+      var s = (r && r.ok && r.data.shop) || {};
+      render(s.upi || CFG.UPI_ID, s.name || CFG.SHOP_NAME || 'Sreshta Fresh');
+    }).catch(function () { if (!done) { done = true; clearTimeout(timer); fallback(); } });
+  })();
+  </script>
+</body>
+</html>
