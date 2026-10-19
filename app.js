@@ -132,10 +132,12 @@
     var s = CAT.shop, c = CAT.chicken;
     $('notice').innerHTML = s.afterCutoff
       ? '<div class="note">🌙 It\'s after ' + hourTxt(s.cutoffHour) + '. Orders placed now will be packed tomorrow morning.</div>' : '';
-    $('chickenCard').innerHTML = c.preorderOpen
-      ? '<div class="chick"><div class="em">🐓</div><div><b>Country chicken pre-orders are open</b><span>For ' + fmtD(c.sunday) +
-        (c.lastPrice ? ' · about ' + rs(c.lastPrice) + '/kg' : '') + ' · pay when you receive it</span></div>' +
-        '<button class="btn gold" data-act="pre">Reserve</button></div>' : '';
+    var chick = CAT.items.filter(function (i) { return i.category === CHICKEN; });
+    var chickLeft = chick.reduce(function (a, i) { return a + i.left; }, 0);
+    $('chickenCard').innerHTML = c.online && chick.length
+      ? '<div class="chick"><div class="em">🐓</div><div><b>' + (s.isSunday ? 'Country chicken is here today!' : 'Pre-book country chicken for ' + fmtD(c.sunday)) +
+        '</b><span>' + (chickLeft > 0 ? q(chickLeft) + ' kg left · sold in 1 kg and ½ kg · pick up or delivery on Sunday' : 'All booked for this week. See you next week!') +
+        '</span></div>' + (chickLeft > 0 ? '<button class="btn gold" data-cat="' + CHICKEN + '">Book</button>' : '') + '</div>' : '';
 
     var present = {};
     CAT.items.forEach(function (i) { present[i.category] = true; });
@@ -177,7 +179,8 @@
       (it.photo ? '<img src="' + esc(it.photo) + '" alt="' + esc(it.item) + '" loading="lazy" onerror="this.remove()">' : '') +
       '<span class="left' + (sold ? ' out' : low ? ' low' : '') + '">' + leftTxt + '</span></div>' +
       '<div class="info"><div><div class="name">' + esc(it.item) + '</div><div class="price"><b>' + rs(it.price) + '</b> / ' +
-      (it.unit === 'pcs' ? 'piece' : it.unit) + '</div></div>' +
+      (it.unit === 'pcs' ? 'piece' : it.unit) + '</div>' +
+      (it.category === CHICKEN && CAT.chicken && !CAT.shop.isSunday ? '<div class="price">🗓 Arrives ' + fmtD(CAT.chicken.sunday) + '</div>' : '') + '</div>' +
       (sold ? '<button class="btn add" disabled>Sold out</button>'
         : inCart ? stepper(it, inCart, false) : '<button class="btn green add" data-act="add">Add</button>') +
       '</div></div>';
@@ -439,8 +442,10 @@
     if (!o) { location.hash = ''; return; }
     var s = shop();
     var head = { Placed: 'Order placed!', Packed: 'Packed & ready! 📦', Completed: 'Received. Thank you! 🌿', Cancelled: 'Order cancelled' }[o.status] || 'Order placed!';
+    var hasChicken = o.items.some(function (i) { return i.category === CHICKEN; });
     var msg = {
-      Placed: 'We\'ll message you on WhatsApp when it\'s packed and ready.',
+      Placed: hasChicken && !s.isSunday ? 'Your chicken arrives on Sunday. We\'ll message you on WhatsApp when it\'s packed and ready.'
+        : 'We\'ll message you on WhatsApp when it\'s packed and ready.',
       Packed: 'Your order is ready for pickup. If you can\'t come, we\'ll deliver it.',
       Completed: 'Hope you enjoy it!',
       Cancelled: 'This order was cancelled.'
@@ -559,7 +564,12 @@
       if (e.target === $('sheetWrap')) closeSheet();
       return;
     }
-    if (t.dataset.cat) { FILTER = t.dataset.cat; renderShop(); return; }
+    if (t.dataset.cat) {
+      FILTER = t.dataset.cat;
+      renderShop();
+      if (t.classList.contains('gold')) $('cats').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
     if (t.dataset.fv) {
       var f = t.parentNode.dataset.tg === 'PRE' ? PRE : FORM;
       f.fulfilment = t.dataset.fv;
