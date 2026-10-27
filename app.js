@@ -149,10 +149,13 @@
     CAT.items.forEach(function (i) { present[i.category] = true; });
     if (FILTER !== 'all' && !present[FILTER]) FILTER = 'all';
     var cats = CATS.filter(function (x) { return x[0] === 'all' || present[x[0]]; });
-    $('cats').innerHTML = cats.map(function (x) {
-      return '<button class="cat' + (FILTER === x[0] ? ' on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[1] + '</button>';
-    }).join('');
-    $('nav').innerHTML = cats.slice(1).map(function (x) {
+    if ($('cats')) {
+      $('cats').innerHTML = cats.map(function (x) {
+        return '<button class="cat' + (FILTER === x[0] ? ' on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[1] + '</button>';
+      }).join('');
+    }
+    // Header links are now the only category filter, so they include "All" to get back.
+    $('nav').innerHTML = (cats.length > 2 ? cats : []).map(function (x) {
       return '<button class="' + (FILTER === x[0] ? 'on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[1] + '</button>';
     }).join('');
     renderPromo();
@@ -840,7 +843,7 @@
       FILTER = t.dataset.cat;
       if (VIEW !== 'shop') location.hash = '';
       if (CAT) renderShop();
-      if (t.dataset.promo || t.classList.contains('gold')) $('cats').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (t.dataset.promo || t.classList.contains('gold')) $('grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
     if (t.dataset.fv) {
