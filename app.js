@@ -173,6 +173,7 @@
     }];
   }
   function renderPromo() {
+    if (!$('promo')) return;   // page without a banner area: just skip it
     var slides = promoSlides();
     var sig = JSON.stringify(slides);
     if (sig === PROMO.sig) return;
@@ -196,6 +197,7 @@
     if (slides.length > 1) PROMO.timer = setInterval(function () { if (!PROMO.paused && !document.hidden) showSlide(PROMO.idx + 1); }, 6000);
   }
   function showSlide(i) {
+    if (!$('promo')) return;
     var s = $('promo').querySelectorAll('.slide'), d = $('promo').querySelectorAll('.promo-dots button');
     if (!s.length) return;
     PROMO.idx = (i + s.length) % s.length;
@@ -204,6 +206,7 @@
   }
   (function promoGestures() {
     var el = $('promo'), x0 = null;
+    if (!el) return;
     el.addEventListener('mouseenter', function () { PROMO.paused = true; });
     el.addEventListener('mouseleave', function () { PROMO.paused = false; });
     el.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; PROMO.paused = true; }, { passive: true });
