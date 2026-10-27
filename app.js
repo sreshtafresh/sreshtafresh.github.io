@@ -185,8 +185,7 @@
         '<div class="slide-txt">' +
         (b.kicker ? '<div class="slide-kicker">' + esc(b.kicker) + '</div>' : '') +
         '<h2>' + (b.title ? '<span>' + esc(b.title) + '</span> ' : '') + (b.highlight ? '<em>' + esc(b.highlight) + '</em>' : '') + '</h2>' +
-        (b.text ? '<p>' + esc(b.text) + '</p>' : '') +
-        '<button class="btn gold" data-cat="' + esc(b.link || 'all') + '" data-promo="1">' + esc(b.button || 'Shop now') + '</button></div>' +
+        (b.text ? '<p>' + esc(b.text) + '</p>' : '') + '</div>' +
         (b.photo ? '<div class="slide-ph"><img src="' + esc(b.photo) + '" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>' : '') +
         '</div>';
     }).join('') + '</div>' +
