@@ -133,6 +133,11 @@ main { max-width: 1280px; margin: 0 auto; padding: 22px clamp(16px, 4vw, 48px) 1
 .price b { font-size: 26px; font-weight: 800; }
 .price span { color: var(--muted); font-size: 15px; }
 .per { color: var(--muted); font-size: 12.5px; margin-top: 1px; }
+/* Market price comparison: our price, then the market price crossed out */
+.price s.mrp, .line .price s.mrp { color: var(--muted); font-weight: 500; text-decoration-thickness: 1.5px; }
+.price s.mrp { font-size: 17px; }
+.price em.off { flex-basis: 100%; font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--green); }
+.saving { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: #e8f3ec; color: var(--green); font-weight: 700; font-size: 14px; text-align: center; }
 .acts { display: flex; gap: 10px; margin-top: auto; padding-top: 14px; }
 .acts .btn { flex: 1; }
 .count {

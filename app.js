@@ -286,8 +286,10 @@
       (sold ? '<option>' + esc(packLabel(it, it.step)) + '</option>'
         : opts.map(function (o) { return '<option value="' + o + '"' + (o === p ? ' selected' : '') + '>' + packLabel(it, o) + '</option>'; }).join('')) +
       '</select>' +
-      '<div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b><span>/ ' +
-      (sold ? 'per ' + (it.unit === 'pcs' ? 'piece' : it.unit) : 'pack') + '</span></div>' +
+      '<div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b>' +
+      (it.mrp > it.price ? '<s class="mrp" title="Market price">' + rs(r2(it.mrp * (sold ? 1 : p))) + '</s>' : '') +
+      '<span>/ ' + (sold ? 'per ' + (it.unit === 'pcs' ? 'piece' : it.unit) : 'pack') + '</span>' +
+      (it.mrp > it.price ? '<em class="off">' + Math.round((1 - it.price / it.mrp) * 100) + '% off market price</em>' : '') + '</div>' +
       (!sold && p !== 1 ? '<div class="per">' + rs(it.price) + ' per ' + (it.unit === 'pcs' ? (it.category === 'Eggs' ? 'egg' : 'piece') : it.unit) + '</div>' : '') +
       '<div class="acts">' + (sold ? '<button class="btn out wide" disabled>Sold out</button>'
         : '<div class="count"><button data-act="cdec" aria-label="One pack less">−</button><span>' + n + '</span>' +
@@ -338,6 +340,13 @@
   function cartKeys() { return Object.keys(CART).filter(function (k) { return itemByKey(k); }); }
   function cartTotal() {
     return r2(cartKeys().reduce(function (a, k) { return a + r2(CART[k] * itemByKey(k).price); }, 0));
+  }
+  /** How much less than market price the basket costs (only items with a market price count). */
+  function cartSavings() {
+    return r2(cartKeys().reduce(function (a, k) {
+      var it = itemByKey(k);
+      return a + (it.mrp > it.price ? r2(CART[k] * it.mrp) - r2(CART[k] * it.price) : 0);
+    }, 0));
   }
   function updateBasketBar() {
     var n = cartKeys().length;
@@ -455,9 +464,10 @@
     box.innerHTML = keys.map(function (k) {
       var it = itemByKey(k);
       return '<div class="line" data-key="' + esc(k) + '"><div class="grow"><div class="name">' + esc(it.item) + '</div><div class="price">' +
-        rs(it.price) + ' / ' + (it.unit === 'pcs' ? 'piece' : it.unit) + ' · ' + q(it.left) + ' left</div></div>' +
+        rs(it.price) + (it.mrp > it.price ? ' <s class="mrp">' + rs(it.mrp) + '</s>' : '') + ' / ' + (it.unit === 'pcs' ? 'piece' : it.unit) + ' · ' + q(it.left) + ' left</div></div>' +
         stepper(it, CART[k], true) + '<div class="amt">' + rs(r2(CART[k] * it.price)) + '</div></div>';
-    }).join('') + '<div class="total"><span>Total</span><span>' + rs(cartTotal()) + '</span></div>';
+    }).join('') + '<div class="total"><span>Total</span><span>' + rs(cartTotal()) + '</span></div>' +
+      (cartSavings() > 0 ? '<div class="saving">🎉 You save ' + rs(cartSavings()) + ' compared to market price</div>' : '');
     $('placeBtn').textContent = placeLabel();
   }
 
