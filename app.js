@@ -24,7 +24,7 @@
   var LAST = load('sf_last', null);
   var lastOk = 0, fetching = false, lastSig = '', gridDirty = false;
   var sheetMode = '';
-  var FORM = { fulfilment: 'Pickup', notes: '' };
+  var FORM = { fulfilment: 'Pickup', notes: '', pay: 'Online' };
   var PRE = { kg: 1, fulfilment: 'Pickup', notes: '' };
   var MO = { phone: '', data: null, busy: false };
 
@@ -344,14 +344,32 @@
       }).join('') + '</div>';
   }
 
+  // ---------- payment choice ----------
+  function onlinePay() { return !!(CAT && CAT.shop.razorpay) && FORM.pay === 'Online'; }
+  function payInfoTxt() {
+    return onlinePay() ? '💳 Pay securely now with UPI, card or net banking (Razorpay). Your items are held for ' +
+      ((CAT && CAT.shop.holdMinutes) || 5) + ' minutes while you pay.'
+      : '💵 No payment now. Pay by Cash or PhonePe when you receive your order.';
+  }
+  function payToggle() {
+    if (!(CAT && CAT.shop.razorpay)) return '';
+    return '<label>How would you like to pay?</label><div class="toggle" data-tg="PAY">' +
+      [['Online', '💳 Pay now'], ['Delivery', '💵 Pay on delivery']].map(function (o) {
+        return '<button type="button" data-fv="' + o[0] + '" class="' + (FORM.pay === o[0] ? 'on' : '') + '">' + o[1] + '</button>';
+      }).join('') + '</div>' +
+      (CAT.shop.razorpayTest ? '<div class="hint" style="margin:-4px 0 10px">🧪 Test mode: no real money is taken.</div>' : '');
+  }
+  function placeLabel() { return (onlinePay() ? 'Pay ' : 'Place order · ') + rs(cartTotal()); }
+
   function openBasket() {
     sheetMode = 'basket';
     showSheet('<div class="sheet-head"><h2>Your basket</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
       '<div class="card" id="bk-lines"></div>' +
-      '<div class="payinfo">💵 No payment now. Pay by Cash or PhonePe when you receive your order.</div>' +
       '<div class="card"><h3 style="margin-bottom:10px">Your details</h3>' + custFields('bk') +
       '<label>Pickup or delivery?</label>' + toggle('FORM') +
-      '<div class="field" style="margin:0"><label for="bk-notes">Note for us (optional)</label><input id="bk-notes" maxlength="200" value="' + esc(FORM.notes) + '" placeholder="e.g. please call before coming"></div></div>' +
+      '<div class="field"><label for="bk-notes">Note for us (optional)</label><input id="bk-notes" maxlength="200" value="' + esc(FORM.notes) + '" placeholder="e.g. please call before coming"></div>' +
+      payToggle() + '</div>' +
+      '<div class="payinfo" id="bk-payinfo">' + payInfoTxt() + '</div>' +
       '<div id="bk-err"></div><button class="btn gold big wide" id="placeBtn" data-act="place">Place order</button>');
     renderBasketLines();
     bindCust('bk');
@@ -375,7 +393,7 @@
         rs(it.price) + ' / ' + (it.unit === 'pcs' ? 'piece' : it.unit) + ' · ' + q(it.left) + ' left</div></div>' +
         stepper(it, CART[k], true) + '<div class="amt">' + rs(r2(CART[k] * it.price)) + '</div></div>';
     }).join('') + '<div class="total"><span>Total</span><span>' + rs(cartTotal()) + '</span></div>';
-    $('placeBtn').textContent = 'Place order · ' + rs(cartTotal());
+    $('placeBtn').textContent = placeLabel();
   }
 
   function placeOrder() {
@@ -386,6 +404,7 @@
     if (!keys.length) return;
     var btn = $('placeBtn');
     if (btn.disabled) return;
+    if (onlinePay()) return payOnline(c, keys, btn);
     btn.disabled = true;
     btn.textContent = 'Placing your order…';
     $('bk-err').innerHTML = '';
@@ -417,6 +436,115 @@
         'If it keeps failing, check <a href="#orders">My orders</a> before ordering again.</div>';
       btn.disabled = false;
       btn.textContent = 'Try again · ' + rs(cartTotal());
+    });
+  }
+
+  // ---------- Razorpay ----------
+  function loadRazorpay() {
+    if (window.Razorpay) return Promise.resolve();
+    return new Promise(function (res, rej) {
+      var s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload = res;
+      s.onerror = function () { rej(new Error('net')); };
+      document.head.appendChild(s);
+    });
+  }
+  function basketError(msg) {
+    var box = $('bk-err');
+    if (box) box.innerHTML = '<div class="note err" style="margin:0 0 12px">' + msg + '</div>';
+    var btn = $('placeBtn');
+    if (btn) { btn.disabled = false; btn.textContent = placeLabel(); }
+  }
+  function orderPlaced(order) {
+    LAST = order;
+    store('sf_last', LAST);
+    CART = {};
+    store('sf_cart', CART);
+    FORM.notes = '';
+    FORM.reqId = '';
+    closeSheet();
+    location.hash = '#done';
+    if (VIEW === 'done') renderDone();
+    refresh();
+  }
+
+  /** 1) hold the items on the server, 2) open Razorpay, 3) confirm with the server. */
+  function payOnline(c, keys, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Opening secure payment…';
+    $('bk-err').innerHTML = '';
+    FORM.notes = $('bk-notes').value.trim();
+    FORM.reqId = FORM.reqId || newReqId();
+    Promise.all([loadRazorpay(), apiPost({
+      action: 'startPayment', reqId: FORM.reqId, phone: c.phone, name: c.name, flat: c.flat, apartment: c.apartment,
+      fulfilment: FORM.fulfilment, notes: FORM.notes, items: keys.map(function (k) { return { key: k, qty: CART[k] }; })
+    })]).then(function (res) {
+      var r = res[1];
+      if (!r.ok) {
+        if (r.catalog) setCatalog(r.catalog, false);
+        renderBasketLines();
+        return basketError(esc(r.error));
+      }
+      openCheckout(r.pay, c);
+    }).catch(function () {
+      basketError('We couldn\'t reach the payment service. Check your internet and try again.');
+    });
+  }
+
+  function openCheckout(pay, c) {
+    var finished = false;
+    var rz = new window.Razorpay({
+      key: pay.keyId, amount: pay.amount, currency: 'INR', order_id: pay.rzpOrderId,
+      name: shop().name || 'Sreshta Fresh', description: 'Order ' + pay.orderId,
+      prefill: { name: c.name, contact: '+91' + c.phone },
+      notes: { shop_order: pay.orderId }, theme: { color: '#015c30' },
+      timeout: Math.max(60, Math.floor((pay.holdUntil - Date.now()) / 1000) - 20),   // close before the hold ends
+      handler: function (resp) { finished = true; confirmPaid(pay, resp, 0); },
+      modal: { confirm_close: true, ondismiss: function () { if (!finished) abandonPay(pay, c); } }
+    });
+    rz.on('payment.failed', function (resp) {
+      toast('Payment failed: ' + ((resp.error && resp.error.description) || 'please try again') + '. You can try again in the same window.', true);
+    });
+    rz.open();
+  }
+
+  function confirmPaid(pay, resp, attempt) {
+    showSheet('<div class="done-top"><div class="tick">⏳</div><h2>Confirming your payment…</h2>' +
+      '<div class="oid">Please don\'t close this page.</div></div>');
+    sheetMode = 'info';
+    apiPost({
+      action: 'confirmPayment', orderId: pay.orderId, razorpay_payment_id: resp.razorpay_payment_id,
+      razorpay_order_id: resp.razorpay_order_id, razorpay_signature: resp.razorpay_signature
+    }).then(function (r) {
+      if (r.ok) return orderPlaced(r.order);
+      paidButUnconfirmed(pay, r.error);
+    }).catch(function () {
+      if (attempt < 3) return setTimeout(function () { confirmPaid(pay, resp, attempt + 1); }, 2000);
+      paidButUnconfirmed(pay, '');
+    });
+  }
+  function paidButUnconfirmed(pay, why) {
+    showSheet('<div class="done-top"><div class="tick">!</div><h2>Payment received, confirming</h2>' +
+      '<div class="oid">Order ' + esc(pay.orderId) + '</div></div>' +
+      '<div class="note">' + (why ? esc(why) + ' ' : '') + 'Please <b>don\'t pay again</b>. Our shop checks every payment with Razorpay ' +
+      'automatically, and your order will show in <b>My orders</b> shortly. If it doesn\'t, contact us with the order number above.</div>' +
+      '<div class="actions" style="margin-top:14px">' + contactButtons('Hi! I paid online for order ' + pay.orderId + ' but it wasn\'t confirmed on the website.') +
+      '<a class="btn ghost wide" href="#orders">🧾 My orders</a></div>');
+    sheetMode = 'info';
+    CART = {};
+    store('sf_cart', CART);
+    FORM.reqId = '';
+  }
+  function abandonPay(pay, c) {
+    apiPost({ action: 'abandonPayment', orderId: pay.orderId, phone: c.phone }).then(function (r) {
+      if (r.ok && r.order && r.order.status === 'Placed') return orderPlaced(r.order);   // they had paid after all
+      FORM.reqId = '';
+      basketError('Payment not completed. Your basket is still here. Try again, or choose <b>Pay on delivery</b>.');
+      refresh();
+    }).catch(function () {
+      FORM.reqId = '';
+      basketError('Payment not completed. Your basket is still here.');
     });
   }
 
@@ -513,9 +641,11 @@
     $('view-done').innerHTML = '<div class="done-top"><div class="tick"' + (o.status === 'Cancelled' ? ' style="background:var(--red)">✕' : '>✓') + '</div><h2>' + head + '</h2><div class="oid">Order ' + esc(o.id) + '</div></div>' +
       (s.afterCutoff && o.status === 'Placed' ? '<div class="note">🌙 It\'s late, so we\'ll pack this tomorrow morning.</div>' : '') +
       '<div class="card">' + track(o) + '<div class="hint" style="text-align:center;margin-bottom:8px">' + msg + '</div>' + orderLines(o) + '</div>' +
-      '<div class="payinfo">💵 Pay by Cash or PhonePe when you receive it.</div>' +
+      '<div class="payinfo">' + (o.payment === 'Razorpay' ? '✅ Paid online. Nothing more to pay.'
+        : o.payment === 'Refunded' ? '↩️ Your payment has been refunded. It reaches your account in 5–7 working days.'
+        : '💵 Pay by Cash or PhonePe when you receive it.') + '</div>' +
       '<div class="actions">' + contactButtons('Hi! I just placed order ' + o.id + ' (' + rs(o.total) + ') on the website.') +
-      '<a class="btn ghost big wide" href="' + payUrl(o) + '">Pay now by PhonePe / UPI (optional)</a>' +
+      (o.payment === 'Pending' ? '<a class="btn ghost big wide" href="' + payUrl(o) + '">Pay now by PhonePe / UPI (optional)</a>' : '') +
       '<div class="row2"><a class="btn big" href="#orders">🧾 My orders</a><a class="btn big" href="#">🛒 Shop more</a></div></div>';
   }
 
@@ -577,21 +707,24 @@
       h += '<div class="card"><div class="ord-head"><div><b>' + fmtD(o.date) + ' · ' + esc(o.time) + '</b><div class="ord-items">' +
         esc(o.items.map(function (i) { return i.item + ' ' + q(i.qty) + ' ' + unitTxt(i.unit, i.qty); }).join(', ')) + '</div></div>' +
         '<div style="text-align:right"><b>' + rs(o.total) + '</b><br>' +
-        (o.status === 'Cancelled' ? '<span class="chip cancel">Cancelled</span>' : unpaid ? '<span class="chip pending">To pay</span>' : '<span class="chip">Paid · ' + esc(o.payment) + '</span>') +
+        (o.payment === 'Refunded' ? '<span class="chip cancel">Refunded</span>'
+          : o.status === 'Cancelled' ? '<span class="chip cancel">Cancelled</span>'
+          : unpaid ? '<span class="chip pending">To pay</span>'
+          : '<span class="chip">' + (o.payment === 'Razorpay' ? 'Paid online' : 'Paid · ' + esc(o.payment)) + '</span>') +
         '</div></div>' + (o.type === 'Online' ? track(o) : '') +
         ((unpaid || open) ? '<div class="actions" style="margin-top:10px">' +
           (unpaid ? '<a class="btn gold" href="' + payUrl(o) + '">Pay ' + rs(o.total) + ' by PhonePe / UPI</a>' : '') +
-          (open ? '<button class="btn danger" data-act="cancelOrder" data-id="' + esc(o.id) + '">Cancel order</button>' : '') + '</div>' : '') +
+          (open ? '<button class="btn danger" data-act="cancelOrder" data-id="' + esc(o.id) + '" data-paid="' + (o.payment === 'Razorpay' ? o.total : '') + '">Cancel order</button>' : '') + '</div>' : '') +
         '</div>';
     });
     h += '<div class="actions" style="margin-top:4px">' + contactButtons('Hi! I have a question about my order.') + '</div>';
     $('mo-list').innerHTML = h;
   }
-  function cancelOrder(id) {
-    if (!confirm('Cancel this order?')) return;
+  function cancelOrder(id, paid) {
+    if (!confirm(paid ? 'Cancel this order? ' + rs(paid) + ' will be refunded to your account (5–7 working days).' : 'Cancel this order?')) return;
     apiPost({ action: 'cancelOrder', orderId: id, phone: MO.phone }).then(function (r) {
       if (!r.ok) return toast(r.error, true);
-      toast('Order cancelled.');
+      toast(paid ? 'Order cancelled. Your refund has been started.' : 'Order cancelled.');
       loadMyOrders(true);
       refresh();
     }).catch(function () { toast('Could not reach the shop. Try again.', true); });
@@ -632,8 +765,14 @@
       return;
     }
     if (t.dataset.fv) {
-      var f = t.parentNode.dataset.tg === 'PRE' ? PRE : FORM;
-      f.fulfilment = t.dataset.fv;
+      var tg = t.parentNode.dataset.tg;
+      if (tg === 'PAY') {
+        FORM.pay = t.dataset.fv;
+        $('bk-payinfo').textContent = payInfoTxt();
+        if (!$('placeBtn').disabled) $('placeBtn').textContent = placeLabel();
+      } else {
+        (tg === 'PRE' ? PRE : FORM).fulfilment = t.dataset.fv;
+      }
       [].forEach.call(t.parentNode.children, function (b) { b.classList.toggle('on', b === t); });
       return;
     }
@@ -650,7 +789,7 @@
     else if (act === 'pinc') preKg(0.5);
     else if (act === 'pdec') preKg(-0.5);
     else if (act === 'preSubmit') submitPre();
-    else if (act === 'cancelOrder') cancelOrder(t.dataset.id);
+    else if (act === 'cancelOrder') cancelOrder(t.dataset.id, Number(t.dataset.paid) || 0);
     else if (act === 'cancelPre') cancelPre(t.dataset.id);
   });
   document.addEventListener('change', function (e) {
