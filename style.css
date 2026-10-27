@@ -264,3 +264,20 @@ input:focus, textarea:focus { outline: none; border-color: var(--ink); }
 @media (max-width: 380px) {
   .line .stepper { width: 116px; }
 }
+
+/* ---------- footer + policy pages ---------- */
+.site-foot { border-top: 1px solid var(--line); background: var(--soft); padding: 22px clamp(16px, 4vw, 48px) calc(96px + env(safe-area-inset-bottom)); text-align: center; }
+.site-foot nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; }
+.site-foot a { color: var(--ink); font-weight: 600; font-size: 14px; text-decoration: none; }
+.site-foot a:hover { text-decoration: underline; }
+.site-foot p { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+main.legal { max-width: 760px; padding-bottom: 40px; }
+.legal h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 900; margin: 6px 0 6px; }
+.legal h2 { font-size: 19px; margin: 26px 0 8px; }
+.legal p, .legal li { color: var(--ink-2); line-height: 1.65; }
+.legal ul { padding-left: 20px; margin: 6px 0; }
+.legal li { margin: 4px 0; }
+.legal .upd { color: var(--muted); font-size: 13.5px; margin-top: 0; }
+.legal a { color: var(--green); font-weight: 600; }
+.contact-card p { margin: 0 0 14px; }
+.contact-card p:last-child { margin-bottom: 0; }
