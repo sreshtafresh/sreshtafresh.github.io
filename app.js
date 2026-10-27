@@ -17,6 +17,7 @@
   var CAT = null;                 // catalog from the server
   var CART = load('sf_cart', {}); // item key -> qty
   var PACK = {};                  // item key -> pack size chosen in the card's dropdown
+  var CNT = {};                   // item key -> how many packs the − 1 + counter shows
   var ME = load('sf_me', {});     // phone, name, flat, apartment
   var FILTER = 'all';
   var VIEW = 'shop';
@@ -169,19 +170,19 @@
 
   /** Pack sizes offered in the dropdown, limited to what's in stock. */
   function packs(it) {
+    var eggs = it.category === 'Eggs';
     var list = it.category === CHICKEN ? [0.5, 1, 1.5, 2, 2.5, 3, 4, 5]
       : it.unit === 'kg' ? [0.25, 0.5, 1, 1.5, 2, 3, 5]
-      : it.category === 'Eggs' ? [6, 12, 18, 24, 30]
+      : eggs ? [6, 12, 30]
       : [1, 2, 3, 4, 5, 6, 8, 10];
     var ok = list.filter(function (p) { return p <= it.left + 1e-9; });
-    if (!ok.length && it.left > 0) {
-      ok = it.category === 'Eggs' ? [1, 2, 3, 4, 5].filter(function (p) { return p <= it.left; }) : [floorStep(it.left, it.step)];
-    }
+    // Eggs are only sold in packs of 6 / 12 / 30; other items can take whatever is left.
+    if (!ok.length && it.left > 0 && !eggs) ok = [floorStep(it.left, it.step)];
     return ok.filter(function (p) { return p > 0; });
   }
   function packLabel(it, p) {
     if (it.unit === 'kg') return p < 1 ? Math.round(p * 1000) + ' g' : q(p) + ' kg';
-    if (it.category === 'Eggs') return p + (p === 1 ? ' egg' : ' eggs');
+    if (it.category === 'Eggs') return p === 30 ? '30 Eggs (Tray)' : p + (p === 1 ? ' Egg' : ' Eggs');
     if (it.unit === 'bunch') return p + (p === 1 ? ' bunch' : ' bunches');
     return p + (p === 1 ? ' piece' : ' pieces');
   }
@@ -192,17 +193,24 @@
     if (opts.indexOf(dflt) >= 0) return dflt;
     return opts.filter(function (p) { return p <= dflt; }).pop() || opts[0] || it.step;
   }
+  /** How many more packs of size p still fit in the stock, after what's already in the basket. */
+  function maxPacks(it, p) { return Math.floor(r3((it.left - (CART[it.key] || 0)) / p) + 1e-9); }
+  function packCount(it, p) { return Math.max(1, Math.min(CNT[it.key] || 1, Math.max(1, maxPacks(it, p)))); }
+  /** Basket +/− buttons: eggs move by half a dozen so totals stay in packs. */
+  function basketStep(it) { return it.category === 'Eggs' ? 6 : it.step; }
+  function photoFor(it, p) { return (it.packPhotos && it.packPhotos[String(p)]) || it.photo || ''; }
 
   function itemCard(it) {
-    var sold = it.left <= 0, inCart = CART[it.key] || 0, low = isLow(it);
+    var opts = packs(it);
+    var sold = it.left <= 0 || !opts.length, inCart = CART[it.key] || 0, low = isLow(it);
     var preBook = it.category === CHICKEN && CAT.chicken && !CAT.shop.isSunday;
     var badge = sold ? '' : preBook ? 'Pre-book' : low ? 'Selling fast' : '';
     var stock = sold ? 'Sold out for today' : (low ? 'Only ' : '') + q(it.left) + ' ' + unitTxt(it.unit, it.left) + ' left' +
       (preBook ? ' · arrives ' + fmtD(CAT.chicken.sunday) : '');
-    var opts = packs(it), p = chosenPack(it);
+    var p = chosenPack(it), n = packCount(it, p), full = !sold && maxPacks(it, p) < 1, photo = photoFor(it, p);
     return '<div class="item' + (sold ? ' sold' : '') + '" data-key="' + esc(it.key) + '">' +
       '<div class="ph ' + catCls(it.category) + '"><span class="em">' + (EMOJI[it.category] || '🧺') + '</span>' +
-      (it.photo ? '<img src="' + esc(it.photo) + '" alt="' + esc(it.item) + '" loading="lazy" onerror="this.remove()">' : '') +
+      (photo ? '<img src="' + esc(photo) + '" alt="' + esc(it.item) + '" loading="lazy" onerror="this.remove()">' : '') +
       (badge ? '<span class="badge">' + badge + '</span>' : '') +
       (sold ? '<span class="stamp">Out of stock</span>' : '') + '</div>' +
       '<div class="info"><div class="kicker">' + esc(it.category) + '</div>' +
@@ -213,12 +221,15 @@
       (sold ? '<option>' + esc(packLabel(it, it.step)) + '</option>'
         : opts.map(function (o) { return '<option value="' + o + '"' + (o === p ? ' selected' : '') + '>' + packLabel(it, o) + '</option>'; }).join('')) +
       '</select>' +
-      '<div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b><span>/ ' + (sold ? 'per ' + (it.unit === 'pcs' ? 'piece' : it.unit) : packLabel(it, p)) + '</span></div>' +
+      '<div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b><span>/ ' +
+      (sold ? 'per ' + (it.unit === 'pcs' ? 'piece' : it.unit) : 'pack') + '</span></div>' +
       (!sold && p !== 1 ? '<div class="per">' + rs(it.price) + ' per ' + (it.unit === 'pcs' ? (it.category === 'Eggs' ? 'egg' : 'piece') : it.unit) + '</div>' : '') +
       '<div class="acts">' + (sold ? '<button class="btn out wide" disabled>Sold out</button>'
-        : (inCart ? '<button class="btn ghost" data-act="basket">In basket · ' + packLabel(it, inCart) + '</button>' : '') +
-          '<button class="btn gold" data-act="add">' + (inCart ? 'Add more' : 'Add to basket') + '</button>') +
-      '</div></div></div>';
+        : '<div class="count"><button data-act="cdec" aria-label="One pack less">−</button><span>' + n + '</span>' +
+          '<button data-act="cinc" aria-label="One pack more">+</button></div>' +
+          '<button class="btn gold" data-act="add"' + (full ? ' disabled' : '') + '>Add</button>') + '</div>' +
+      (inCart ? '<button class="in-basket" data-act="basket">✓ ' + packLabel(it, inCart) + ' in basket · View</button>' : '') +
+      '</div></div>';
   }
 
   function stepper(it, qty, light) {
@@ -230,10 +241,20 @@
   function addPack(key) {
     var it = itemByKey(key);
     if (!it) return;
-    var p = chosenPack(it), before = CART[key] || 0;
-    setQty(key, before + p);
+    var p = chosenPack(it), n = packCount(it, p), before = CART[key] || 0;
+    setQty(key, r3(before + p * n));
     var now = CART[key] || 0;
-    if (now > before) toast('Added ' + packLabel(it, r3(now - before)) + ' ' + it.item + ' · ' + packLabel(it, now) + ' in basket');
+    CNT[key] = 1;
+    renderGrid();
+    if (now > before) toast('Added ' + (n > 1 ? n + ' × ' : '') + packLabel(it, p) + ' ' + it.item + ' to your basket');
+  }
+  function changeCount(key, d) {
+    var it = itemByKey(key);
+    if (!it) return;
+    var p = chosenPack(it), max = maxPacks(it, p), n = packCount(it, p) + d;
+    if (n > max) return toast('Only ' + q(it.left) + ' ' + unitTxt(it.unit, it.left) + ' ' + it.item + ' available.', true);
+    CNT[key] = Math.max(1, n);
+    renderGrid();
   }
 
   function setQty(key, qty) {
@@ -618,9 +639,11 @@
     }
     var act = t.dataset.act, holder = t.closest('[data-key]'), key = holder && holder.dataset.key;
     if (act === 'add') addPack(key);
+    else if (act === 'cinc') changeCount(key, 1);
+    else if (act === 'cdec') changeCount(key, -1);
     else if (act === 'basket') openBasket();
-    else if (act === 'inc') { var a = itemByKey(key); if (a) setQty(key, (CART[key] || 0) + a.step); }
-    else if (act === 'dec') { var b = itemByKey(key); if (b) setQty(key, (CART[key] || 0) - b.step); }
+    else if (act === 'inc') { var a = itemByKey(key); if (a) setQty(key, (CART[key] || 0) + basketStep(a)); }
+    else if (act === 'dec') { var b = itemByKey(key); if (b) setQty(key, (CART[key] || 0) - basketStep(b)); }
     else if (act === 'close') closeSheet();
     else if (act === 'place') placeOrder();
     else if (act === 'pre') openPre();
@@ -635,6 +658,7 @@
     if (t.dataset && t.dataset.act === 'pack') {
       var card = t.closest('[data-key]');
       PACK[card.dataset.key] = Number(t.value);
+      CNT[card.dataset.key] = 1;
       t.blur();
       renderGrid();
       return;
