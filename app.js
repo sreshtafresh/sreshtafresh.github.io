@@ -23,6 +23,7 @@
   var VIEW = 'shop';
   var LAST = load('sf_last', null);
   var lastOk = 0, fetching = false, lastSig = '', gridDirty = false;
+  var PAYING = false;   // our own items are on hold while the Razorpay window is open
   var sheetMode = '';
   var FORM = { fulfilment: 'Pickup', notes: '', pay: 'Online' };
   var PRE = { kg: 1, fulfilment: 'Pickup', notes: '' };
@@ -105,6 +106,8 @@
 
   /** Someone else bought the last of an item: shrink the basket to what's left. */
   function clampCart(notify) {
+    // While paying, the stock we see is reduced by our own hold; that isn't someone else buying it.
+    if (PAYING) return;
     var msgs = [];
     Object.keys(CART).forEach(function (k) {
       var it = itemByKey(k);
@@ -451,12 +454,14 @@
     });
   }
   function basketError(msg) {
+    PAYING = false;
     var box = $('bk-err');
     if (box) box.innerHTML = '<div class="note err" style="margin:0 0 12px">' + msg + '</div>';
     var btn = $('placeBtn');
     if (btn) { btn.disabled = false; btn.textContent = placeLabel(); }
   }
   function orderPlaced(order) {
+    PAYING = false;
     LAST = order;
     store('sf_last', LAST);
     CART = {};
@@ -474,6 +479,7 @@
     btn.disabled = true;
     btn.textContent = 'Opening secure payment…';
     $('bk-err').innerHTML = '';
+    PAYING = true;
     FORM.notes = $('bk-notes').value.trim();
     FORM.reqId = FORM.reqId || newReqId();
     Promise.all([loadRazorpay(), apiPost({
@@ -532,19 +538,32 @@
       '<div class="actions" style="margin-top:14px">' + contactButtons('Hi! I paid online for order ' + pay.orderId + ' but it wasn\'t confirmed on the website.') +
       '<a class="btn ghost wide" href="#orders">🧾 My orders</a></div>');
     sheetMode = 'info';
+    PAYING = false;
     CART = {};
     store('sf_cart', CART);
     FORM.reqId = '';
   }
   function abandonPay(pay, c) {
+    var btn = $('placeBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Releasing your items…'; }
     apiPost({ action: 'abandonPayment', orderId: pay.orderId, phone: c.phone }).then(function (r) {
       if (r.ok && r.order && r.order.status === 'Placed') return orderPlaced(r.order);   // they had paid after all
       FORM.reqId = '';
-      basketError('Payment not completed. Your basket is still here. Try again, or choose <b>Pay on delivery</b>.');
-      refresh();
+      // Get the released stock back first (a fresh fetch, not a poll that may still be in flight);
+      // only then check whether anything really sold out.
+      return apiGet({ api: 'catalog' }).then(function (cr) {
+        if (cr.ok) setCatalog(cr.data, false);
+      }).catch(function () { /* keep the basket as it is */ }).then(function () {
+        PAYING = false;
+        clampCart(true);
+        basketError('Payment not completed. Your basket is still here. Try again, or choose <b>Pay on delivery</b>.');
+        renderBasketLines();
+        if (CAT) renderGrid();
+      });
     }).catch(function () {
       FORM.reqId = '';
       basketError('Payment not completed. Your basket is still here.');
+      renderBasketLines();
     });
   }
 
