@@ -5,33 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Sreshta Fresh</title>
   <meta name="description" content="Fresh veggies, flowers, country eggs and country chicken from Sreshta Farms. Order online, pay when you receive it.">
-  <meta name="theme-color" content="#015c30">
+  <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
     <a href="#" class="brand" aria-label="Sreshta Fresh home"><img src="logo.png" alt="Sreshta Fresh by Sreshta Farms"></a>
-    <a href="#orders" class="pill-btn" id="myOrdersBtn">🧾 My orders</a>
+    <nav class="nav" id="nav"></nav>
+    <a href="#orders" class="pill-btn" id="myOrdersBtn">My orders</a>
   </header>
 
   <main>
     <!-- SHOP -->
     <section id="view-shop" class="view on">
-      <div class="hero">
-        <div>
-          <h1>Fresh from our farm, today</h1>
-          <p>Order now, pay by Cash or PhonePe when you receive it.</p>
-        </div>
-        <div class="live" id="live"><span class="dot"></span><span id="liveTxt">Connecting…</span></div>
+      <div class="shop-head">
+        <h1 id="shopTitle">Shop Farm Fresh</h1>
+        <nav class="cats" id="cats"></nav>
+      </div>
+      <div class="infobar">
+        <span class="live" id="live"><span class="dot"></span><span id="liveTxt">Connecting…</span></span>
+        <span class="sep">·</span>
+        <span>Order now, pay by Cash or PhonePe when you receive it</span>
       </div>
       <div id="notice"></div>
       <div id="chickenCard"></div>
-      <nav class="cats" id="cats"></nav>
       <div class="grid" id="grid"><div class="loading">Loading today's produce…</div></div>
     </section>
 
@@ -43,7 +45,7 @@
         <label for="mo-phone">Your phone number</label>
         <div class="inline">
           <input id="mo-phone" type="tel" inputmode="numeric" maxlength="14" placeholder="10-digit mobile">
-          <button class="btn green" id="mo-go">Show</button>
+          <button class="btn dark" id="mo-go">Show</button>
         </div>
       </div>
       <div id="mo-list"></div>

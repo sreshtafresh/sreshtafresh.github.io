@@ -9,12 +9,14 @@
   var CFG = window.SF_CONFIG || {};
   var API = CFG.API_URL || '';
   var CHICKEN = 'Country Chicken';
-  var CATS = [['all', 'All', '🧺'], ['Veggies', 'Veggies', '🥬'], ['Flowers', 'Flowers', '🌼'], ['Eggs', 'Eggs', '🥚'], [CHICKEN, 'Chicken', '🐓']];
+  var CATS = [['all', 'All', 'Shop Farm Fresh'], ['Veggies', 'Veggies', 'Shop Veggies'], ['Flowers', 'Flowers', 'Shop Flowers'],
+    ['Eggs', 'Eggs', 'Shop Country Eggs'], [CHICKEN, 'Country Chicken', 'Shop Country Chicken']];
   var EMOJI = { 'Veggies': '🥬', 'Flowers': '🌼', 'Eggs': '🥚', 'Country Chicken': '🐓' };
   var POLL_MS = 5000;
 
   var CAT = null;                 // catalog from the server
   var CART = load('sf_cart', {}); // item key -> qty
+  var PACK = {};                  // item key -> pack size chosen in the card's dropdown
   var ME = load('sf_me', {});     // phone, name, flat, apartment
   var FILTER = 'all';
   var VIEW = 'shop';
@@ -134,56 +136,89 @@
       ? '<div class="note">🌙 It\'s after ' + hourTxt(s.cutoffHour) + '. Orders placed now will be packed tomorrow morning.</div>' : '';
     var chick = CAT.items.filter(function (i) { return i.category === CHICKEN; });
     var chickLeft = chick.reduce(function (a, i) { return a + i.left; }, 0);
-    $('chickenCard').innerHTML = c.online && chick.length
+    $('chickenCard').innerHTML = c.online && chick.length && FILTER !== CHICKEN
       ? '<div class="chick"><div class="em">🐓</div><div><b>' + (s.isSunday ? 'Country chicken is here today!' : 'Pre-book country chicken for ' + fmtD(c.sunday)) +
         '</b><span>' + (chickLeft > 0 ? q(chickLeft) + ' kg left · sold in 1 kg and ½ kg · pick up or delivery on Sunday' : 'All booked for this week. See you next week!') +
-        '</span></div>' + (chickLeft > 0 ? '<button class="btn gold" data-cat="' + CHICKEN + '">Book</button>' : '') + '</div>' : '';
+        '</span></div>' + (chickLeft > 0 ? '<button class="btn gold" data-cat="' + CHICKEN + '">Book now</button>' : '') + '</div>' : '';
 
     var present = {};
     CAT.items.forEach(function (i) { present[i.category] = true; });
     if (FILTER !== 'all' && !present[FILTER]) FILTER = 'all';
-    $('cats').innerHTML = CATS.filter(function (x) { return x[0] === 'all' || present[x[0]]; }).map(function (x) {
-      return '<button class="cat' + (FILTER === x[0] ? ' on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[2] + ' ' + x[1] + '</button>';
+    var cats = CATS.filter(function (x) { return x[0] === 'all' || present[x[0]]; });
+    $('cats').innerHTML = cats.map(function (x) {
+      return '<button class="cat' + (FILTER === x[0] ? ' on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[1] + '</button>';
     }).join('');
+    $('nav').innerHTML = cats.slice(1).map(function (x) {
+      return '<button class="' + (FILTER === x[0] ? 'on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[1] + '</button>';
+    }).join('');
+    $('shopTitle').textContent = (CATS.filter(function (x) { return x[0] === FILTER; })[0] || CATS[0])[2];
     renderGrid();
   }
 
   function renderGrid() {
     // Don't yank the field away while someone is typing a quantity.
     var a = document.activeElement;
-    if (a && a.tagName === 'INPUT' && $('grid').contains(a)) { gridDirty = true; return; }
+    if (a && /INPUT|SELECT/.test(a.tagName) && $('grid').contains(a)) { gridDirty = true; return; }
     gridDirty = false;
     var items = CAT.items.filter(function (i) { return FILTER === 'all' || i.category === FILTER; });
-    if (!items.length) {
-      $('grid').innerHTML = '<div class="empty">Nothing in stock right now. Please check back soon 🌱</div>';
-      return;
-    }
-    var h = '', lastCat = '';
-    items.forEach(function (it) {
-      if (FILTER === 'all' && it.category !== lastCat) {
-        lastCat = it.category;
-        h += '<div class="sec-title">' + EMOJI[it.category] + ' ' + esc(it.category) + '</div>';
-      }
-      h += itemCard(it);
-    });
-    $('grid').innerHTML = h;
+    $('grid').innerHTML = items.length ? items.map(itemCard).join('')
+      : '<div class="empty">Nothing in stock right now. Please check back soon 🌱</div>';
   }
 
   function isLow(it) { return it.left > 0 && it.left <= (it.unit === 'kg' ? 2 : 5); }
 
+  /** Pack sizes offered in the dropdown, limited to what's in stock. */
+  function packs(it) {
+    var list = it.category === CHICKEN ? [0.5, 1, 1.5, 2, 2.5, 3, 4, 5]
+      : it.unit === 'kg' ? [0.25, 0.5, 1, 1.5, 2, 3, 5]
+      : it.category === 'Eggs' ? [6, 12, 18, 24, 30]
+      : [1, 2, 3, 4, 5, 6, 8, 10];
+    var ok = list.filter(function (p) { return p <= it.left + 1e-9; });
+    if (!ok.length && it.left > 0) {
+      ok = it.category === 'Eggs' ? [1, 2, 3, 4, 5].filter(function (p) { return p <= it.left; }) : [floorStep(it.left, it.step)];
+    }
+    return ok.filter(function (p) { return p > 0; });
+  }
+  function packLabel(it, p) {
+    if (it.unit === 'kg') return p < 1 ? Math.round(p * 1000) + ' g' : q(p) + ' kg';
+    if (it.category === 'Eggs') return p + (p === 1 ? ' egg' : ' eggs');
+    if (it.unit === 'bunch') return p + (p === 1 ? ' bunch' : ' bunches');
+    return p + (p === 1 ? ' piece' : ' pieces');
+  }
+  function chosenPack(it) {
+    var opts = packs(it), want = PACK[it.key];
+    if (opts.indexOf(want) >= 0) return want;
+    var dflt = it.category === CHICKEN ? 1 : it.unit === 'kg' ? 0.5 : it.category === 'Eggs' ? 12 : 1;
+    if (opts.indexOf(dflt) >= 0) return dflt;
+    return opts.filter(function (p) { return p <= dflt; }).pop() || opts[0] || it.step;
+  }
+
   function itemCard(it) {
     var sold = it.left <= 0, inCart = CART[it.key] || 0, low = isLow(it);
-    var leftTxt = sold ? 'Sold out' : (low ? 'Only ' : '') + q(it.left) + ' ' + unitTxt(it.unit, it.left) + ' left';
+    var preBook = it.category === CHICKEN && CAT.chicken && !CAT.shop.isSunday;
+    var badge = sold ? '' : preBook ? 'Pre-book' : low ? 'Selling fast' : '';
+    var stock = sold ? 'Sold out for today' : (low ? 'Only ' : '') + q(it.left) + ' ' + unitTxt(it.unit, it.left) + ' left' +
+      (preBook ? ' · arrives ' + fmtD(CAT.chicken.sunday) : '');
+    var opts = packs(it), p = chosenPack(it);
     return '<div class="item' + (sold ? ' sold' : '') + '" data-key="' + esc(it.key) + '">' +
       '<div class="ph ' + catCls(it.category) + '"><span class="em">' + (EMOJI[it.category] || '🧺') + '</span>' +
       (it.photo ? '<img src="' + esc(it.photo) + '" alt="' + esc(it.item) + '" loading="lazy" onerror="this.remove()">' : '') +
-      '<span class="left' + (sold ? ' out' : low ? ' low' : '') + '">' + leftTxt + '</span></div>' +
-      '<div class="info"><div><div class="name">' + esc(it.item) + '</div><div class="price"><b>' + rs(it.price) + '</b> / ' +
-      (it.unit === 'pcs' ? 'piece' : it.unit) + '</div>' +
-      (it.category === CHICKEN && CAT.chicken && !CAT.shop.isSunday ? '<div class="price">🗓 Arrives ' + fmtD(CAT.chicken.sunday) + '</div>' : '') + '</div>' +
-      (sold ? '<button class="btn add" disabled>Sold out</button>'
-        : inCart ? stepper(it, inCart, false) : '<button class="btn green add" data-act="add">Add</button>') +
-      '</div></div>';
+      (badge ? '<span class="badge">' + badge + '</span>' : '') +
+      (sold ? '<span class="stamp">Out of stock</span>' : '') + '</div>' +
+      '<div class="info"><div class="kicker">' + esc(it.category) + '</div>' +
+      '<div class="name">' + esc(it.item) + '</div>' +
+      '<div class="sub' + (sold ? ' out' : low ? ' low' : '') + '">' + stock + '</div>' +
+      '<div class="lbl">Pack</div>' +
+      '<select class="pack" data-act="pack" aria-label="Pack size"' + (sold ? ' disabled' : '') + '>' +
+      (sold ? '<option>' + esc(packLabel(it, it.step)) + '</option>'
+        : opts.map(function (o) { return '<option value="' + o + '"' + (o === p ? ' selected' : '') + '>' + packLabel(it, o) + '</option>'; }).join('')) +
+      '</select>' +
+      '<div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b><span>/ ' + (sold ? 'per ' + (it.unit === 'pcs' ? 'piece' : it.unit) : packLabel(it, p)) + '</span></div>' +
+      (!sold && p !== 1 ? '<div class="per">' + rs(it.price) + ' per ' + (it.unit === 'pcs' ? (it.category === 'Eggs' ? 'egg' : 'piece') : it.unit) + '</div>' : '') +
+      '<div class="acts">' + (sold ? '<button class="btn out wide" disabled>Sold out</button>'
+        : (inCart ? '<button class="btn ghost" data-act="basket">In basket · ' + packLabel(it, inCart) + '</button>' : '') +
+          '<button class="btn gold" data-act="add">' + (inCart ? 'Add more' : 'Add to basket') + '</button>') +
+      '</div></div></div>';
   }
 
   function stepper(it, qty, light) {
@@ -192,9 +227,13 @@
       '<span class="u">' + esc(it.unit) + '</span><button data-act="inc" aria-label="More">+</button></div>';
   }
 
-  function firstQty(it) {
-    var want = it.category === CHICKEN ? 1 : it.unit === 'kg' ? 0.5 : 1;
-    return Math.min(want, floorStep(it.left, it.step)) || it.step;
+  function addPack(key) {
+    var it = itemByKey(key);
+    if (!it) return;
+    var p = chosenPack(it), before = CART[key] || 0;
+    setQty(key, before + p);
+    var now = CART[key] || 0;
+    if (now > before) toast('Added ' + packLabel(it, r3(now - before)) + ' ' + it.item + ' · ' + packLabel(it, now) + ' in basket');
   }
 
   function setQty(key, qty) {
@@ -292,7 +331,7 @@
       '<div class="card"><h3 style="margin-bottom:10px">Your details</h3>' + custFields('bk') +
       '<label>Pickup or delivery?</label>' + toggle('FORM') +
       '<div class="field" style="margin:0"><label for="bk-notes">Note for us (optional)</label><input id="bk-notes" maxlength="200" value="' + esc(FORM.notes) + '" placeholder="e.g. please call before coming"></div></div>' +
-      '<div id="bk-err"></div><button class="btn green big wide" id="placeBtn" data-act="place">Place order</button>');
+      '<div id="bk-err"></div><button class="btn gold big wide" id="placeBtn" data-act="place">Place order</button>');
     renderBasketLines();
     bindCust('bk');
   }
@@ -566,8 +605,9 @@
     }
     if (t.dataset.cat) {
       FILTER = t.dataset.cat;
-      renderShop();
-      if (t.classList.contains('gold')) $('cats').scrollIntoView({ behavior: 'smooth' });
+      if (VIEW !== 'shop') location.hash = '';
+      if (CAT) renderShop();
+      if (t.classList.contains('gold')) window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     if (t.dataset.fv) {
@@ -577,7 +617,8 @@
       return;
     }
     var act = t.dataset.act, holder = t.closest('[data-key]'), key = holder && holder.dataset.key;
-    if (act === 'add') { var it = itemByKey(key); if (it) setQty(key, firstQty(it)); }
+    if (act === 'add') addPack(key);
+    else if (act === 'basket') openBasket();
     else if (act === 'inc') { var a = itemByKey(key); if (a) setQty(key, (CART[key] || 0) + a.step); }
     else if (act === 'dec') { var b = itemByKey(key); if (b) setQty(key, (CART[key] || 0) - b.step); }
     else if (act === 'close') closeSheet();
@@ -591,6 +632,13 @@
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
+    if (t.dataset && t.dataset.act === 'pack') {
+      var card = t.closest('[data-key]');
+      PACK[card.dataset.key] = Number(t.value);
+      t.blur();
+      renderGrid();
+      return;
+    }
     if (t.dataset && t.dataset.act === 'qty') {
       var holder = t.closest('[data-key]');
       t.blur();
