@@ -98,7 +98,7 @@
     $('live').classList.remove('off');
     tick();
     clampCart(notify);
-    var sig = JSON.stringify([d.items, d.chicken, d.shop.afterCutoff]);
+    var sig = JSON.stringify([d.items, d.chicken, d.shop.afterCutoff, d.banners]);
     if (sig !== lastSig) { lastSig = sig; renderShop(); }
     updateBasketBar();
     if (sheetMode === 'basket') renderBasketLines();
@@ -155,9 +155,66 @@
     $('nav').innerHTML = cats.slice(1).map(function (x) {
       return '<button class="' + (FILTER === x[0] ? 'on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[1] + '</button>';
     }).join('');
-    $('shopTitle').textContent = (CATS.filter(function (x) { return x[0] === FILTER; })[0] || CATS[0])[2];
+    renderPromo();
     renderGrid();
   }
+
+  // ---------- banner slideshow ----------
+  var PROMO = { idx: 0, timer: null, sig: '', paused: false };
+  function promoSlides() {
+    var list = (CAT.banners || []).slice();
+    if (list.length) return list;
+    // Nothing set up in the staff app yet: one simple slide, using a product photo if there is one.
+    var withPhoto = CAT.items.filter(function (i) { return i.photo; })[0];
+    return [{
+      kicker: 'From Sreshta Farms', title: 'Farm fresh,', highlight: 'every day',
+      text: 'Fresh veggies, flowers and country eggs from our farm, with live stock so you always know what\'s left.',
+      button: 'Shop now', link: 'all', photo: withPhoto ? withPhoto.photo : ''
+    }];
+  }
+  function renderPromo() {
+    var slides = promoSlides();
+    var sig = JSON.stringify(slides);
+    if (sig === PROMO.sig) return;
+    PROMO.sig = sig;
+    if (PROMO.idx >= slides.length) PROMO.idx = 0;
+    $('promo').innerHTML = '<div class="promo-track">' + slides.map(function (b, i) {
+      var bg = b.photo ? ' style="--bg:url(\'' + esc(b.photo) + '\')"' : '';
+      return '<div class="slide' + (i === PROMO.idx ? ' on' : '') + (b.photo ? ' has-ph' : '') + '"' + bg + '>' +
+        '<div class="slide-txt">' +
+        (b.kicker ? '<div class="slide-kicker">' + esc(b.kicker) + '</div>' : '') +
+        '<h2>' + (b.title ? '<span>' + esc(b.title) + '</span> ' : '') + (b.highlight ? '<em>' + esc(b.highlight) + '</em>' : '') + '</h2>' +
+        (b.text ? '<p>' + esc(b.text) + '</p>' : '') +
+        '<button class="btn gold" data-cat="' + esc(b.link || 'all') + '" data-promo="1">' + esc(b.button || 'Shop now') + '</button></div>' +
+        (b.photo ? '<div class="slide-ph"><img src="' + esc(b.photo) + '" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>' : '') +
+        '</div>';
+    }).join('') + '</div>' +
+      (slides.length > 1 ? '<div class="promo-dots">' + slides.map(function (b, i) {
+        return '<button data-slide="' + i + '" class="' + (i === PROMO.idx ? 'on' : '') + '" aria-label="Slide ' + (i + 1) + '"></button>';
+      }).join('') + '</div>' : '');
+    clearInterval(PROMO.timer);
+    if (slides.length > 1) PROMO.timer = setInterval(function () { if (!PROMO.paused && !document.hidden) showSlide(PROMO.idx + 1); }, 6000);
+  }
+  function showSlide(i) {
+    var s = $('promo').querySelectorAll('.slide'), d = $('promo').querySelectorAll('.promo-dots button');
+    if (!s.length) return;
+    PROMO.idx = (i + s.length) % s.length;
+    [].forEach.call(s, function (el, k) { el.classList.toggle('on', k === PROMO.idx); });
+    [].forEach.call(d, function (el, k) { el.classList.toggle('on', k === PROMO.idx); });
+  }
+  (function promoGestures() {
+    var el = $('promo'), x0 = null;
+    el.addEventListener('mouseenter', function () { PROMO.paused = true; });
+    el.addEventListener('mouseleave', function () { PROMO.paused = false; });
+    el.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; PROMO.paused = true; }, { passive: true });
+    el.addEventListener('touchend', function (e) {
+      PROMO.paused = false;
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 40) showSlide(PROMO.idx + (dx < 0 ? 1 : -1));
+      x0 = null;
+    });
+  })();
 
   function renderGrid() {
     // Don't yank the field away while someone is typing a quantity.
@@ -771,7 +828,8 @@
 
   // ---------- events ----------
   document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-act],[data-cat],[data-fv]');
+    var t = e.target.closest('[data-act],[data-cat],[data-fv],[data-slide]');
+    if (t && t.dataset.slide) { showSlide(Number(t.dataset.slide)); return; }
     if (!t) {
       if (e.target === $('sheetWrap')) closeSheet();
       return;
@@ -780,7 +838,7 @@
       FILTER = t.dataset.cat;
       if (VIEW !== 'shop') location.hash = '';
       if (CAT) renderShop();
-      if (t.classList.contains('gold')) window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (t.dataset.promo || t.classList.contains('gold')) $('cats').scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
     if (t.dataset.fv) {
