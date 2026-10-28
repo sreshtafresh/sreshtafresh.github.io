@@ -311,7 +311,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--ink); }
 .slide-kicker { color: var(--gold); font-style: italic; font-weight: 800; font-size: clamp(14px, 1.6vw, 19px); margin-bottom: 6px; }
 .slide h2 { font-size: clamp(26px, 3.9vw, 46px); font-weight: 900; line-height: 1.04; letter-spacing: -.02em; }
 .slide h2 span { color: #fff; }
-.slide h2 em { color: var(--gold); font-style: normal; }
+.slide h2 em { display: block; color: var(--gold); font-style: normal; }   /* yellow text on its own line */
 .slide p { color: #e2e6dc; font-size: clamp(13.5px, 1.25vw, 16px); line-height: 1.5; max-width: 54ch; margin: 8px 0 12px; }
 .slide p:last-child { margin-bottom: 0; }
 .slide-ph {
