@@ -135,15 +135,9 @@
 
   // ---------- shop ----------
   function renderShop() {
-    var s = CAT.shop, c = CAT.chicken;
+    var s = CAT.shop;
     $('notice').innerHTML = s.afterCutoff
       ? '<div class="note">🌙 It\'s after ' + hourTxt(s.cutoffHour) + '. Orders placed now will be packed tomorrow morning.</div>' : '';
-    var chick = CAT.items.filter(function (i) { return i.category === CHICKEN; });
-    var chickLeft = chick.reduce(function (a, i) { return a + i.left; }, 0);
-    $('chickenCard').innerHTML = c.online && chick.length && FILTER !== CHICKEN
-      ? '<div class="chick"><div class="em">🐓</div><div><b>' + (s.isSunday ? 'Country chicken is here today!' : 'Pre-book country chicken for ' + fmtD(c.sunday)) +
-        '</b><span>' + (chickLeft > 0 ? q(chickLeft) + ' kg left · sold in 1 kg and ½ kg · pick up or delivery on Sunday' : 'All booked for this week. See you next week!') +
-        '</span></div>' + (chickLeft > 0 ? '<button class="btn gold" data-cat="' + CHICKEN + '">Book now</button>' : '') + '</div>' : '';
 
     var present = {};
     CAT.items.forEach(function (i) { present[i.category] = true; });
