@@ -171,6 +171,28 @@ main { max-width: 1280px; margin: 0 auto; padding: 22px clamp(16px, 4vw, 48px) 1
 .saving { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: #e8f3ec; color: var(--green); font-weight: 700; font-size: 14px; text-align: center; }
 .acts { display: flex; gap: 10px; margin-top: auto; padding-top: 14px; }
 .acts .btn { flex: 1; }
+/* Star rating beside the price; tap to read reviews */
+.price .rate { margin-left: auto; border: 0; background: none; padding: 0; font-size: 14px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.price .rate i { font-style: normal; color: var(--gold); }
+.price .rate span { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+.stars { color: var(--gold); letter-spacing: 1px; }
+.stars i { color: #ddd6c6; font-style: normal; }
+.rv-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 14px; }
+.rv-sum b { font-size: 34px; font-weight: 900; }
+.rv-sum .stars { font-size: 20px; }
+.rv-sum span:last-child { flex-basis: 100%; color: var(--muted); font-size: 13px; }
+.rv .rv-head { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12.5px; }
+.rv .rv-head .stars { font-size: 16px; }
+.rv p { margin: 8px 0 6px; line-height: 1.45; }
+.rv .rv-who { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.rate-row .name { margin: 0 0 6px; }
+.star-pick { display: flex; gap: 4px; margin-bottom: 10px; }
+.star-pick button { border: 0; background: none; padding: 0 2px; font-size: 34px; line-height: 1; color: #ddd6c6; }
+.star-pick button.on { color: var(--gold); }
+.rate-row textarea { width: 100%; resize: vertical; font: inherit; font-size: 14px; }
+.rv-ask { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px 10px 16px; border-radius: 10px; background: var(--gold-l); font-weight: 600; font-size: 14px; }
+.rv-ask span { flex: 1; }
+.rv-ask .x { flex: none; width: 32px; height: 32px; font-size: 17px; }
 .acts .btn.gold { min-height: 46px; font-size: 16px; letter-spacing: .06em; }
 .in-basket { border: 0; background: none; padding: 0; text-align: left; font-size: 13px; color: var(--green); font-weight: 700; margin-top: 10px; }
 

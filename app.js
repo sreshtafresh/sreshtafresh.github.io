@@ -280,6 +280,7 @@
       '<div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b>' +
       (it.mrp > it.price ? '<s class="mrp" title="Market price">' + rs(r2(it.mrp * (sold ? 1 : p))) + '</s>' : '') +
       (sold ? '<span>/ per ' + (it.unit === 'pcs' ? 'piece' : it.unit) + '</span>' : '') +
+      (it.rating ? '<button class="rate" data-act="reviews" aria-label="See reviews"><i>★</i> ' + it.rating.avg.toFixed(1) + ' <span>(' + it.rating.n + ')</span></button>' : '') +
       (it.mrp > it.price ? '<em class="off">' + Math.round((1 - it.price / it.mrp) * 100) + '% off market price</em>' : '') + '</div>' +
       '<div class="acts">' + (sold ? '<button class="btn out wide" disabled>Sold out</button>'
         : '<button class="btn gold" data-act="add"' + (full ? ' disabled' : '') + '>Add</button>') + '</div>' +
@@ -772,6 +773,7 @@
     d.orders.forEach(function (o) {
       var open = o.status === 'Placed' || o.status === 'Packed';
       var unpaid = o.payment === 'Pending' && o.status !== 'Cancelled';
+      var rv = o.review && o.review.items ? o.review : null;
       h += '<div class="card"><div class="ord-head"><div><b>' + fmtD(o.date) + ' · ' + esc(o.time) + '</b><div class="ord-items">' +
         esc(o.items.map(function (i) { return i.item + ' ' + q(i.qty) + ' ' + unitTxt(i.unit, i.qty); }).join(', ')) + '</div></div>' +
         '<div style="text-align:right"><b>' + rs(o.total) + '</b><br>' +
@@ -783,6 +785,9 @@
         ((unpaid || open) ? '<div class="actions" style="margin-top:10px">' +
           (unpaid ? '<a class="btn gold" href="' + payUrl(o) + '">Pay ' + rs(o.total) + ' by PhonePe / UPI</a>' : '') +
           (open ? '<button class="btn danger" data-act="cancelOrder" data-id="' + esc(o.id) + '" data-paid="' + (o.payment === 'Razorpay' ? o.total : '') + '">Cancel order</button>' : '') + '</div>' : '') +
+        (rv ? (rv.rated < rv.items
+          ? '<div class="actions" style="margin-top:10px"><button class="btn gold" data-act="rate" data-id="' + esc(o.id) + '">⭐ Rate your items</button></div>'
+          : '<button class="in-basket" data-act="rate" data-id="' + esc(o.id) + '">✓ Thanks for rating · Edit</button>') : '') +
         '</div>';
     });
     h += '<div class="actions" style="margin-top:4px">' + contactButtons('Hi! I have a question about my order.') + '</div>';
@@ -806,14 +811,131 @@
     }).catch(function () { toast('Could not reach the shop. Try again.', true); });
   }
 
+  // ---------- reviews ----------
+  function starRow(n) { return '<span class="stars">' + '★★★★★'.slice(0, n) + '<i>' + '★★★★★'.slice(0, 5 - n) + '</i></span>'; }
+
+  /** Everyone's reviews of one item (tap the ★ rating on a card). */
+  function openReviews(key) {
+    var it = itemByKey(key);
+    if (!it) return;
+    sheetMode = 'info';
+    showSheet('<div class="sheet-head"><h2>' + esc(it.item) + ' reviews</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
+      '<div id="rv-list"><div class="empty">Loading reviews…</div></div>');
+    apiGet({ api: 'reviews', item: it.item }).then(function (r) {
+      if (!r.ok) throw new Error(r.error);
+      var d = r.data, box = $('rv-list');
+      if (!box) return;
+      box.innerHTML = (d.rating ? '<div class="rv-sum"><b>' + d.rating.avg.toFixed(1) + '</b>' + starRow(Math.round(d.rating.avg)) +
+        '<span>' + d.rating.n + ' review' + (d.rating.n === 1 ? '' : 's') + ' from customers who bought it</span></div>' : '') +
+        (d.reviews.length ? d.reviews.map(function (v) {
+          return '<div class="card rv"><div class="rv-head">' + starRow(v.stars) + '<span>' + fmtD(v.date) + '</span></div>' +
+            (v.comment ? '<p>' + esc(v.comment) + '</p>' : '') +
+            '<div class="rv-who">' + esc(v.name || 'Customer') + (v.apartment ? ', ' + esc(v.apartment) : '') + ' · ✓ Verified buyer</div></div>';
+        }).join('') : '<div class="empty">No reviews yet.</div>');
+    }).catch(function (e) {
+      if ($('rv-list')) $('rv-list').innerHTML = '<div class="note err">' + esc((e && e.message) || 'Could not load reviews.') + '</div>';
+    });
+  }
+
+  /** Rate the items of a completed order: from the WhatsApp link (#review-ID), My orders, or the reminder. */
+  var RV = null;
+  function openRate(orderId, phone) {
+    phone = phone10(phone || MO.phone || ME.phone);
+    sheetMode = 'info';
+    if (!phone) {
+      showSheet('<div class="sheet-head"><h2>⭐ Rate your order</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
+        '<div class="card"><label for="rv-phone">The phone number you ordered with</label>' +
+        '<div class="inline"><input id="rv-phone" type="tel" inputmode="numeric" maxlength="14" placeholder="10-digit mobile">' +
+        '<button class="btn dark" data-act="ratePhone" data-id="' + esc(orderId) + '">Continue</button></div></div>');
+      return;
+    }
+    showSheet('<div class="sheet-head"><h2>⭐ Rate your order</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
+      '<div class="empty">Loading your order…</div>');
+    apiGet({ api: 'review', order: orderId, phone: phone }).then(function (r) {
+      if (!r.ok) throw new Error(r.error);
+      RV = { id: orderId, phone: phone, items: r.data.items };
+      if (!ME.phone) { ME.phone = phone; store('sf_me', ME); }
+      showSheet('<div class="sheet-head"><h2>⭐ How was it' + (r.data.order.name ? ', ' + esc(r.data.order.name) : '') + '?</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
+        '<div class="hint" style="margin-bottom:10px">Your order from ' + fmtD(r.data.order.date) + '. Tap the stars; a comment is optional.</div>' +
+        RV.items.map(function (x, i) {
+          return '<div class="card rate-row" data-i="' + i + '"><div class="name">' + esc(x.item) + '</div>' +
+            '<div class="star-pick">' + [1, 2, 3, 4, 5].map(function (v) {
+              return '<button data-act="star" data-v="' + v + '" class="' + (v <= x.stars ? 'on' : '') + '" aria-label="' + v + ' star' + (v > 1 ? 's' : '') + '">★</button>';
+            }).join('') + '</div>' +
+            '<textarea rows="2" maxlength="300" data-rc="' + i + '" placeholder="Fresh? Tasty? Tell others (optional)">' + esc(x.comment) + '</textarea></div>';
+        }).join('') +
+        '<button class="btn gold big wide" data-act="rateSend" id="rv-send">Submit review</button>');
+    }).catch(function (e) {
+      showSheet('<div class="sheet-head"><h2>⭐ Rate your order</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
+        '<div class="note err">' + esc((e && e.message) || 'Could not load your order. Check your internet.') + '</div>');
+    });
+  }
+  function pickStar(t) {
+    var row = t.closest('.rate-row'), v = Number(t.dataset.v);
+    RV.items[Number(row.dataset.i)].stars = v;
+    [].forEach.call(row.querySelectorAll('[data-act="star"]'), function (b) { b.classList.toggle('on', Number(b.dataset.v) <= v); });
+  }
+  function sendRate() {
+    var ratings = RV.items.map(function (x, i) {
+      var c = document.querySelector('[data-rc="' + i + '"]');
+      return { item: x.item, stars: x.stars, comment: c ? c.value : '' };
+    }).filter(function (x) { return x.stars > 0; });
+    if (!ratings.length) return toast('Tap the stars to rate at least one item.', true);
+    var btn = $('rv-send');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    apiPost({ action: 'review', orderId: RV.id, phone: RV.phone, ratings: ratings }).then(function (r) {
+      if (!r.ok) throw new Error(r.error);
+      skipAsk(RV.id);
+      showSheet('<div class="done-top"><div class="tick">✓</div><h2>Thank you! 🌿</h2><div class="oid">Your review helps other families choose.</div></div>' +
+        '<div class="actions"><button class="btn gold big wide" data-act="close">Back to shop</button></div>');
+      refresh();
+      if (VIEW === 'orders' && MO.phone) loadMyOrders(true);
+    }).catch(function (e) {
+      btn.disabled = false;
+      btn.textContent = 'Submit review';
+      toast((e && e.message) || 'Could not send. Check your internet.', true);
+    });
+  }
+
+  /** Returning customer with an unrated completed order: a small reminder on the shop page. */
+  function skipAsk(id) {
+    var s = load('sf_rv_skip', []);
+    if (s.indexOf(id) < 0) { s.push(id); store('sf_rv_skip', s.slice(-30)); }
+    var el = $('reviewAsk');
+    if (el && el.dataset.id === id) el.innerHTML = '';
+  }
+  function checkReviewAsk() {
+    var ph = phone10(ME.phone);
+    if (!ph || !$('reviewAsk')) return;
+    apiGet({ api: 'orders', phone: ph }).then(function (r) {
+      if (!r.ok) return;
+      var skip = load('sf_rv_skip', []);
+      var o = r.data.orders.filter(function (x) { return x.review && x.review.items && !x.review.rated && skip.indexOf(x.id) < 0; })[0];
+      var el = $('reviewAsk');
+      if (!o) { el.innerHTML = ''; return; }
+      var names = o.items.map(function (i) { return i.item; }).filter(function (n, i, a) { return a.indexOf(n) === i; });
+      el.dataset.id = o.id;
+      el.innerHTML = '<div class="rv-ask"><span>⭐ How was your order from ' + fmtD(o.date) + ' (' + esc(names.slice(0, 3).join(', ') + (names.length > 3 ? '…' : '')) + ')?</span>' +
+        '<button class="btn gold" data-act="rate" data-id="' + esc(o.id) + '">Rate it</button>' +
+        '<button class="x" data-act="rateSkip" data-id="' + esc(o.id) + '" aria-label="Not now">×</button></div>';
+    }).catch(function () { /* just skip the reminder */ });
+  }
+
   // ---------- routing ----------
   function route() {
     var h = location.hash;
+    var rate = /^#review-(.+)$/.exec(h);
     VIEW = h === '#orders' ? 'orders' : h === '#done' ? 'done' : 'shop';
     ['shop', 'orders', 'done'].forEach(function (v) { $('view-' + v).classList.toggle('on', v === VIEW); });
     if (sheetMode) closeSheet();
     if (VIEW === 'orders') showOrders();
     if (VIEW === 'done') renderDone();
+    if (rate) {
+      // Open the review form over the shop, and drop the #review link so a reload doesn't reopen it.
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* old browser */ }
+      openRate(decodeURIComponent(rate[1]));
+    }
     updateBasketBar();
     window.scrollTo(0, 0);
   }
@@ -868,6 +990,16 @@
     else if (act === 'preSubmit') submitPre();
     else if (act === 'cancelOrder') cancelOrder(t.dataset.id, Number(t.dataset.paid) || 0);
     else if (act === 'cancelPre') cancelPre(t.dataset.id);
+    else if (act === 'reviews') openReviews(key);
+    else if (act === 'rate') openRate(t.dataset.id);
+    else if (act === 'ratePhone') {
+      var rp = phone10($('rv-phone').value);
+      if (!rp) return toast('Please enter your 10-digit phone number.', true);
+      openRate(t.dataset.id, rp);
+    }
+    else if (act === 'star') pickStar(t);
+    else if (act === 'rateSend') sendRate();
+    else if (act === 'rateSkip') skipAsk(t.dataset.id);
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
@@ -899,6 +1031,7 @@
   }
   route();
   refresh();
+  if (connected()) checkReviewAsk();
   setInterval(function () {
     if (document.hidden) return;
     refresh();
