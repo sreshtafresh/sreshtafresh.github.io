@@ -47,8 +47,34 @@ button, select { font: inherit; cursor: pointer; }
   border: 2px solid var(--ink); padding: 7px 14px; border-radius: 6px; white-space: nowrap;
 }
 .pill-btn:hover { background: var(--ink); color: var(--gold); }
+.menu-btn { display: none; }
+.nav-shade { display: none; }
+/* Phones: categories move into a side menu opened by the ☰ button */
 @media (max-width: 860px) {
-  .nav { display: none; }
+  .top { gap: 12px; }
+  .menu-btn {
+    display: flex; flex-direction: column; justify-content: center; gap: 5px; flex: none;
+    width: 40px; height: 40px; padding: 0 9px; border: 0; border-radius: 8px; background: var(--soft);
+  }
+  .menu-btn span { display: block; height: 2.5px; border-radius: 2px; background: var(--ink); }
+  .nav {
+    position: fixed; top: 0; bottom: 0; left: 0; z-index: 40; width: min(78vw, 300px); margin: 0;
+    flex-direction: column; gap: 0; padding: 20px 0; background: #fff; box-shadow: 4px 0 24px rgba(0, 0, 0, .15);
+    transform: translateX(-105%); transition: transform .25s ease; overflow-y: auto;
+  }
+  .nav::before {
+    content: "Shop by category"; display: block; padding: 4px 22px 14px; margin-bottom: 6px; border-bottom: 1px solid var(--line);
+    color: var(--gold-d); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  }
+  .nav button {
+    text-align: left; padding: 14px 22px; font-size: 16px; border-bottom: 0; border-left: 4px solid transparent;
+  }
+  .nav button:hover { background: var(--soft); }
+  .nav button.on { border-left-color: var(--gold); background: var(--gold-l); font-weight: 800; }
+  .nav-shade { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, .4); }
+  .nav-open .top { z-index: 50; }   /* lift the header (and its menu) above the shade */
+  .nav-open .nav { transform: none; }
+  .nav-open .nav-shade { display: block; }
   .pill-btn { margin-left: auto; }
   .brand img { height: 42px; }
 }
@@ -152,7 +178,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 22px clamp(16px, 4vw, 48px) 1
   .info { padding: 12px 12px 14px; }
   .name { font-size: 16px; }
   .sub { font-size: 13px; }
-  .kicker { font-size: 10.5px; letter-spacing: .1em; }
+  .info .kicker { display: none; }
   .lbl { margin: 10px 0 5px; font-size: 12.5px; }
   .pack { font-size: 15px; padding: 9px 30px 9px 10px; background-position: right 10px center; }
   .price b { font-size: 21px; }

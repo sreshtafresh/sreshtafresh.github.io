@@ -158,6 +158,7 @@
     $('nav').innerHTML = (cats.length > 2 ? cats : []).map(function (x) {
       return '<button class="' + (FILTER === x[0] ? 'on' : '') + '" data-cat="' + esc(x[0]) + '">' + x[1] + '</button>';
     }).join('');
+    $('menuBtn').hidden = cats.length <= 2;
     renderPromo();
     renderGrid();
   }
@@ -288,9 +289,8 @@
       '</select>' +
       '<div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b>' +
       (it.mrp > it.price ? '<s class="mrp" title="Market price">' + rs(r2(it.mrp * (sold ? 1 : p))) + '</s>' : '') +
-      '<span>/ ' + (sold ? 'per ' + (it.unit === 'pcs' ? 'piece' : it.unit) : 'pack') + '</span>' +
+      (sold ? '<span>/ per ' + (it.unit === 'pcs' ? 'piece' : it.unit) + '</span>' : '') +
       (it.mrp > it.price ? '<em class="off">' + Math.round((1 - it.price / it.mrp) * 100) + '% off market price</em>' : '') + '</div>' +
-      (!sold && p !== 1 ? '<div class="per">' + rs(it.price) + ' per ' + (it.unit === 'pcs' ? (it.category === 'Eggs' ? 'egg' : 'piece') : it.unit) + '</div>' : '') +
       '<div class="acts">' + (sold ? '<button class="btn out wide" disabled>Sold out</button>'
         : '<div class="count"><button data-act="cdec" aria-label="One pack less">−</button><span>' + n + '</span>' +
           '<button data-act="cinc" aria-label="One pack more">+</button></div>' +
@@ -842,6 +842,15 @@
   }
 
   // ---------- events ----------
+  // Phone side menu with the category links.
+  function showNav(open) {
+    document.body.classList.toggle('nav-open', open);
+    $('menuBtn').setAttribute('aria-expanded', String(open));
+  }
+  $('menuBtn').addEventListener('click', function () { showNav(!document.body.classList.contains('nav-open')); });
+  $('navShade').addEventListener('click', function () { showNav(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') showNav(false); });
+
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-act],[data-cat],[data-fv],[data-slide]');
     if (t && t.dataset.slide) { showSlide(Number(t.dataset.slide)); return; }
@@ -850,6 +859,7 @@
       return;
     }
     if (t.dataset.cat) {
+      showNav(false);
       FILTER = t.dataset.cat;
       if (VIEW !== 'shop') location.hash = '';
       if (CAT) renderShop();
