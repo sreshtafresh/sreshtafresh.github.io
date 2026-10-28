@@ -282,7 +282,6 @@
       '<div class="info"><div class="kicker">' + esc(it.category) + '</div>' +
       '<div class="name">' + esc(it.item) + '</div>' +
       '<div class="sub' + (sold ? ' out' : low ? ' low' : '') + '">' + stock + '</div>' +
-      '<div class="lbl">Pack</div>' +
       '<select class="pack" data-act="pack" aria-label="Pack size"' + (sold ? ' disabled' : '') + '>' +
       (sold ? '<option>' + esc(packLabel(it, it.step)) + '</option>'
         : opts.map(function (o) { return '<option value="' + o + '"' + (o === p ? ' selected' : '') + '>' + packLabel(it, o) + '</option>'; }).join('')) +

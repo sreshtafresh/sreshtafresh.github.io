@@ -58,19 +58,19 @@ button, select { font: inherit; cursor: pointer; }
   }
   .menu-btn span { display: block; height: 2.5px; border-radius: 2px; background: var(--ink); }
   .nav {
-    position: fixed; top: 0; bottom: 0; left: 0; z-index: 40; width: min(78vw, 300px); margin: 0;
-    flex-direction: column; gap: 0; padding: 20px 0; background: #fff; box-shadow: 4px 0 24px rgba(0, 0, 0, .15);
-    transform: translateX(-105%); transition: transform .25s ease; overflow-y: auto;
+    position: fixed; top: 0; bottom: 0; right: 0; z-index: 40; width: min(78vw, 300px); margin: 0;
+    flex-direction: column; gap: 0; padding: 20px 0; background: #fff; box-shadow: -4px 0 24px rgba(0, 0, 0, .15);
+    transform: translateX(105%); transition: transform .25s ease; overflow-y: auto;
   }
   .nav::before {
     content: "Shop by category"; display: block; padding: 4px 22px 14px; margin-bottom: 6px; border-bottom: 1px solid var(--line);
     color: var(--gold-d); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
   }
   .nav button {
-    text-align: left; padding: 14px 22px; font-size: 16px; border-bottom: 0; border-left: 4px solid transparent;
+    text-align: left; padding: 14px 22px; font-size: 16px; border-bottom: 0; border-right: 4px solid transparent;
   }
   .nav button:hover { background: var(--soft); }
-  .nav button.on { border-left-color: var(--gold); background: var(--gold-l); font-weight: 800; }
+  .nav button.on { border-right-color: var(--gold); background: var(--gold-l); font-weight: 800; }
   .nav-shade { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, .4); }
   .nav-open .top { z-index: 50; }   /* lift the header (and its menu) above the shade */
   .nav-open .nav { transform: none; }
