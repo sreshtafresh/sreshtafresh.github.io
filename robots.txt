@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /pay.html
+
+Sitemap: https://sreshtafresh.com/sitemap.xml
