@@ -140,6 +140,7 @@
 
     var present = {};
     CAT.items.forEach(function (i) { present[i.category] = true; });
+    if (chickenPending()) present[CHICKEN] = true;   // reservable even before this week's stock is entered
     if (FILTER !== 'all' && !present[FILTER]) FILTER = 'all';
     var cats = CATS.filter(function (x) { return x[0] === 'all' || present[x[0]]; });
     if ($('cats')) {
@@ -220,7 +221,8 @@
     if (a && /INPUT|SELECT/.test(a.tagName) && $('grid').contains(a)) { gridDirty = true; return; }
     gridDirty = false;
     var items = CAT.items.filter(function (i) { return FILTER === 'all' || i.category === FILTER; });
-    $('grid').innerHTML = items.length ? items.map(itemCard).join('')
+    var preChick = chickenPending() && (FILTER === 'all' || FILTER === CHICKEN);
+    $('grid').innerHTML = items.length || preChick ? items.map(itemCard).join('') + (preChick ? chickenPreCard() : '')
       : '<div class="empty">Nothing in stock right now. Please check back soon 🌱</div>';
   }
 
@@ -285,6 +287,26 @@
       '<div class="acts">' + (sold ? '<button class="btn out wide" disabled>Sold out</button>'
         : '<button class="btn gold" data-act="add"' + (full ? ' disabled' : '') + '>Add</button>') + '</div>' +
       (inCart ? '<button class="in-basket" data-act="basket">✓ ' + packLabel(it, inCart) + ' in basket · View</button>' : '') +
+      '</div></div>';
+  }
+
+  // ---------- chicken before this week's stock is entered: reserve instead of add ----------
+  /** True when no chicken is listed yet but reservations can still be taken (or will open). */
+  function chickenPending() {
+    return !!(CAT && CAT.chicken && CAT.chicken.sunday) && !CAT.items.some(function (i) { return i.category === CHICKEN; });
+  }
+  function chickenPreCard() {
+    var c = CAT.chicken, open = !!c.preorderOpen, name = c.item || 'Country Chicken';
+    var when = open ? 'For ' + fmtD(c.sunday) : 'Opens ' + fmtD(c.opensOn) + ', ' + hourTxt(c.openHour);
+    return '<div class="item">' +
+      '<div class="ph ' + catCls(CHICKEN) + '"><span class="em">' + (EMOJI[CHICKEN] || '🐓') + '</span>' +
+      (c.photo ? '<img src="' + esc(c.photo) + '" alt="' + esc(name) + '" loading="lazy" onerror="this.remove()">' : '') +
+      '<span class="badge">Pre-book</span></div>' +
+      '<div class="info"><div class="kicker">' + esc(CHICKEN) + '</div>' +
+      '<div class="name-row"><div class="name">' + esc(name) + '</div><div class="sub">' + esc(when) + '</div></div>' +
+      '<div class="sub">Reserve now, sold by weight, pay when you receive it on Sunday.</div>' +
+      '<div class="price">' + (c.lastPrice ? '<b>' + rs(c.lastPrice) + '</b><span>/ kg</span>' : '<b>By weight</b>') + '</div>' +
+      '<div class="acts"><button class="btn gold" data-act="pre"' + (open ? '' : ' disabled') + '>' + (open ? 'Reserve chicken' : 'Opens soon') + '</button></div>' +
       '</div></div>';
   }
 
