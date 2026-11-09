@@ -1136,8 +1136,11 @@ main.legal { max-width: 760px; padding-bottom: 40px; }
   /* coupon strip: the big offer on its own row, the button full width below */
   .of-big { grid-column: 1 / -1; font-size: clamp(44px, 15vw, 72px); }
   .btn.of-go { grid-column: 1 / -1; width: 100%; }
-  /* veggies / flowers tiles: the picture keeps to the lower-right corner, so the text above stays readable */
-  .bento .bt-c.has-cut .bt-cutbox, .bento .bt-d.has-cut .bt-cutbox { left: 38%; top: 42%; right: 0; bottom: 0; overflow: hidden; }
+  /* veggies on phones: the tomatoes on the left, the text on the right (flowers stay as they were) */
+  .bento .bt[data-tile="veggies"].has-cut { justify-content: flex-end; background: radial-gradient(90% 120% at 15% 60%, #ffd9cc, #fbe9e1 70%); }
+  .bento .bt[data-tile="veggies"].has-cut .bt-txt { max-width: 58%; }
+  .bento .bt[data-tile="veggies"].has-cut .bt-cutbox { right: 50%; overflow: hidden; }
+  .bento .bt[data-tile="veggies"].has-cut .bt-cut { left: auto; right: -12%; bottom: -8%; height: 95%; }
   .bt-c .bt-go, .bt-d .bt-go { padding: 9px 16px; font-size: 13.5px; }
   .bt-a .bt-go { padding: 10px 18px; font-size: 14px; }
 }
