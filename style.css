@@ -40,7 +40,7 @@ button, select { font: inherit; cursor: pointer; }
    .solid    → plain white header (My orders and other pages) */
 .top {
   position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; gap: 18px;
-  padding: 10px clamp(16px, 4vw, 48px); transition: box-shadow .35s ease;
+  padding: 7px clamp(16px, 4vw, 48px); transition: box-shadow .35s ease;
 }
 .top::before {   /* the glass layer (kept off .top itself so the phone side menu still works) */
   content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .35s ease, background-color .35s ease;
@@ -53,7 +53,7 @@ button, select { font: inherit; cursor: pointer; }
 .top.scrolled { box-shadow: 0 1px 0 rgba(0, 0, 0, .05); }
 .top.solid { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 .brand { position: relative; display: block; }
-.brand img { height: 50px; width: auto; display: block; transition: opacity .35s ease; }
+.brand img { height: 40px; width: auto; display: block; transition: opacity .35s ease; }
 .brand .logo-light { position: absolute; left: 0; top: 0; opacity: 0; }
 .top.dark .brand .logo-light { opacity: 1; }
 .top.dark .brand .logo-dark { opacity: 0; }
@@ -64,9 +64,9 @@ button, select { font: inherit; cursor: pointer; }
 /* Right side of the header: search, Instagram, share | menu (white over dark sections) */
 .tools { margin-left: auto; display: flex; align-items: center; gap: clamp(2px, .6vw, 8px); position: relative; color: var(--ink); transition: color .35s ease; }
 .top.dark .tools { color: #fff; }
-.ico { width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; transition: background-color .2s ease; }
+.ico { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; transition: background-color .2s ease; }
 .ico:hover, .ico[aria-expanded="true"] { background: rgba(127, 127, 127, .16); }
-.ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.ico svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .ico svg .fill { fill: currentColor; stroke: none; }
 .tools-sep { width: 1px; height: 26px; margin: 0 clamp(4px, .8vw, 10px); background: currentColor; opacity: .35; }
 /* search box slides open to the left of the icons */
@@ -90,7 +90,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 /* ☰ menu button (three lines, white over dark sections) */
 .menu-btn {
   display: flex; flex-direction: column; justify-content: center; gap: 6px; flex: none;
-  width: 42px; height: 42px; padding: 0 9px; border: 0; border-radius: 50%; background: none; color: inherit;
+  width: 36px; height: 36px; padding: 0 8px; border: 0; border-radius: 50%; background: none; color: inherit;
 }
 .menu-btn:hover { background: rgba(127, 127, 127, .16); }
 .menu-btn span { display: block; height: 2px; border-radius: 2px; background: currentColor; }
@@ -117,14 +117,14 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 .nav-open .nav-shade { display: block; }
 @media (max-width: 860px) {
   .top { gap: 10px; }
-  .brand img { height: 42px; }
-  .ico, .menu-btn { width: 38px; height: 38px; }
+  .brand img { height: 36px; }
+  .ico, .menu-btn { width: 34px; height: 34px; }
   .tools-sep { margin: 0 2px; }
   .search.open { width: calc(100vw - 32px - 4 * 40px); }   /* covers the logo while open */
 }
 
 /* ---------- hero: the whole first screen ---------- */
-:root { --top-h: 70px; }
+:root { --top-h: 56px; }
 /* Landing sections ("bands") take their colour from data-tone: dark green or light green */
 #landing > .band[data-tone="dark"] {
   color: #fff;
@@ -591,7 +591,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 /* tablets & phones: 4 items in 2 columns, text above */
 @media (max-width: 860px) {
   .hero-grid .hc:nth-child(n+5) { display: none; }   /* phones: 4 items, 2 × 2 */
-  :root { --top-h: 62px; }
+  :root { --top-h: 52px; }
   /* phones: the welcome text fills the first screen on its own; the item cards follow just below it */
   .hero { align-items: stretch; }
   .hero-in { grid-template-columns: 1fr; gap: 8px; padding-top: 0; padding-bottom: 32px; }
