@@ -147,7 +147,8 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
     var(--hero-img, url("images/2a7ea348-bc83-4c41-a1dd-9047a102624c.jpg")) center / cover no-repeat;
 }
 /* thin white frame around the landing photo, just below the header */
-#landing > .band.hero { position: relative; }
+/* padding-bottom keeps the content clear of the frame's bottom line, even when the text makes the landing taller */
+#landing > .band.hero { position: relative; padding-bottom: clamp(44px, 7vh, 72px); }
 #landing > .band.hero::after {
   content: ""; position: absolute; pointer-events: none;
   inset: calc(var(--top-h) + 4px) clamp(12px, 2.4vw, 44px) clamp(14px, 3.5vh, 40px);
@@ -268,6 +269,10 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 }
 .hc-add:hover { filter: brightness(.95); }
 .hc-add.hc-res { width: auto; padding: 0 12px; font-size: 13px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }   /* chicken "Reserve" */
+/* landing cards: a compact Reserve, so the price beside it always shows in full */
+.hero-grid .hc .hc-add.hc-res { flex: none; width: auto; height: auto; padding: 6px 10px; font-size: clamp(10.5px, .8vw, 12.5px); letter-spacing: .02em; border-radius: 8px; }
+.hero-grid .hc .hc-row { gap: 6px; }
+.hero-grid .hc .hc-price { min-width: 0; overflow: hidden; }
 .hc-add:disabled, .acts .btn:disabled { opacity: .55; cursor: default; }
 .hc-add.in { background: var(--green); color: #fff; font-size: clamp(17px, 1.4vw, 22px); }
 
@@ -294,7 +299,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
   .hero-grid .hc .hc-price b { font-size: 16px; }
   .hero-grid .hc .hc-price s { display: none; }   /* the "% off" badge on the photo already says it */
   .hero-grid .hc .hc-add { width: 30px; height: 30px; font-size: 18px; }
-  .hero-grid .hc .hc-add.hc-res { width: auto; padding: 0 9px; font-size: 11px; }
+  .hero-grid .hc .hc-add.hc-res { padding: 5px 7px; font-size: 10px; letter-spacing: 0; }
 }
 
 .sec-kicker { color: var(--gold-d); font-weight: 800; font-size: clamp(12px, 1vw, 15px); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 12px; }
