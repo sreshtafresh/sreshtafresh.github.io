@@ -1140,7 +1140,9 @@ main.legal { max-width: 760px; padding-bottom: 40px; }
   .bento .bt[data-tile="veggies"].has-cut { justify-content: flex-end; background: radial-gradient(90% 120% at 15% 60%, #ffd9cc, #fbe9e1 70%); }
   .bento .bt[data-tile="veggies"].has-cut .bt-txt { max-width: 58%; }
   .bento .bt[data-tile="veggies"].has-cut .bt-cutbox { right: 50%; overflow: hidden; }
-  .bento .bt[data-tile="veggies"].has-cut .bt-cut { left: auto; right: -12%; bottom: -8%; height: 95%; }
+  .bento .bt[data-tile="veggies"].has-cut .bt-cut { left: auto; right: -12%; bottom: -8%; height: 95%; filter: none; }   /* no shadow: the box clipped it into a visible edge */
+  .bento .bt[data-tile="veggies"].has-cut { align-items: center; }   /* text sits a bit higher */
+  .bento .bt[data-tile="veggies"].has-cut h3 { margin-left: -14px; }
   .bt-c .bt-go, .bt-d .bt-go { padding: 9px 16px; font-size: 13.5px; }
   .bt-a .bt-go { padding: 10px 18px; font-size: 14px; }
 }
