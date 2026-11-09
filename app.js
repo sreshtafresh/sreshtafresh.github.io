@@ -207,12 +207,12 @@
   var PROMO = { idx: 0, timer: null, sig: '', paused: false };
   function promoSlides() {
     var cp = CAT.shop.coupon;
-    // An active coupon has the strip to itself; the staff app's banners show only when there is no coupon.
+    // The strip shows only the coupon (banners from the staff app are not used on the website); no coupon, no strip.
     if (cp) return [{
       coupon: true, kicker: 'Launch offer', title: 'Use code ' + cp.code + ' at checkout', highlight: cp.pct + '% OFF',
       text: 'On your whole basket: veggies, flowers, country eggs and country chicken.', button: 'Shop now', link: 'all', photo: ''
     }];
-    return (CAT.banners || []).slice();
+    return [];
   }
   /** Banner text, with the coupon code (if mentioned) picked out like a tag. */
   function offerText(t) {
