@@ -514,7 +514,7 @@
       '<span class="hc-off">Pre-book</span></div>' +
       '<div class="hc-body"><div class="hc-name">' + esc(c.name) + '</div>' +
       '<div class="hc-row"><span class="hc-price">' + (c.price ? '<b>' + rs(c.price) + '</b>' : '<b>By weight</b>') + '</span>' +
-      '<button class="hc-add hc-res" data-act="pre"' + (c.open ? '' : ' disabled') + '>Reserve</button></div></div></div>';
+      '<button class="hc-add" data-act="pre" aria-label="Reserve country chicken"' + (c.open ? '' : ' disabled') + '>+</button></div></div></div>';
   }
   /** Full shop card */
   function chickenPreCard() {
