@@ -1106,7 +1106,7 @@
       (it.mrp > it.price ? '<s class="mrp" title="Market price">' + rs(r2(it.mrp * (sold ? 1 : p))) + '</s>' : '') +
       (sold ? '<span>/ per ' + (it.unit === 'pcs' ? 'piece' : it.unit) + '</span>' : '') +
       (it.rating ? '<button class="rate" data-act="reviews" aria-label="See reviews"><i>★</i> ' + it.rating.avg.toFixed(1) + ' <span>(' + it.rating.n + ')</span></button>' : '') +
-      (it.mrp > it.price ? '<em class="off">' + Math.round((1 - it.price / it.mrp) * 100) + '% off market price</em>' : '') + '</div>' +
+      '</div>' +
       (sold ? '<button class="btn out" disabled>Sold out</button>'
         : '<button class="btn gold" data-act="add"' + (full ? ' disabled' : '') + '>Add</button>') + '</div>' +
       (inCart ? '<button class="in-basket" data-act="basket">✓ ' + packLabel(it, inCart) + ' in basket · View</button>' : '') +

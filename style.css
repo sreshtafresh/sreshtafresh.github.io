@@ -1121,3 +1121,23 @@ main.legal { max-width: 760px; padding-bottom: 40px; }
    room under the header. */
 #view-shop { scroll-margin-top: 0; }
 #landing > .band:not(.hero), #view-shop, .subs { padding-top: clamp(calc(var(--top-h) + 28px), 12vh, calc(var(--top-h) + 80px)); }
+
+/* ---------- 2026-11-11: produce cards line up; phone fixes for the coupon strip and the small bento tiles ---------- */
+/* produce cards: how much is left always sits under the name; price and market price side by side */
+.name-row { display: block; }
+.name-row .sub { margin-top: 3px; white-space: normal; }
+.buy .price { flex-wrap: nowrap; white-space: nowrap; }
+.bt-go { white-space: nowrap; }
+@media (max-width: 600px) {
+  .buy { flex-direction: column; align-items: stretch; gap: 8px; }   /* Add: full width under the price */
+  .buy .btn { width: 100%; min-height: 38px; }
+}
+@media (max-width: 860px) {
+  /* coupon strip: the big offer on its own row, the button full width below */
+  .of-big { grid-column: 1 / -1; font-size: clamp(44px, 15vw, 72px); }
+  .btn.of-go { grid-column: 1 / -1; width: 100%; }
+  /* veggies / flowers tiles: the picture keeps to the lower-right corner, so the text above stays readable */
+  .bento .bt-c.has-cut .bt-cutbox, .bento .bt-d.has-cut .bt-cutbox { left: 38%; top: 42%; right: 0; bottom: 0; overflow: hidden; }
+  .bt-c .bt-go, .bt-d .bt-go { padding: 9px 16px; font-size: 13.5px; }
+  .bt-a .bt-go { padding: 10px 18px; font-size: 14px; }
+}
