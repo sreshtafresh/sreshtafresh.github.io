@@ -44,6 +44,17 @@
     var o = SITE.order && SITE.order[key];
     return o && o.length === dflt.length && dflt.every(function (x) { return o.indexOf(x) >= 0; }) ? o.slice() : dflt.slice();
   }
+  /** Produce cards (shop grid, landing cards) are saved by item name, e.g. "cluster-beans". */
+  function itemSlug(it) { return it.item.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'item'; }
+  /** Puts items in the order saved from edit mode; items not in that list keep their usual order after them. */
+  function siteSort(list, key) {
+    var saved = SITE.order && SITE.order[key];
+    if (!saved || !saved.length) return list;
+    var pos = {};
+    saved.forEach(function (k, i) { pos[k] = i; });
+    return list.map(function (it, n) { var p = pos[itemSlug(it)]; return { it: it, n: n, p: p == null ? 1e6 : p }; })
+      .sort(function (a, b) { return a.p - b.p || a.n - b.n; }).map(function (x) { return x.it; });
+  }
   var BENTO_TILES = ['chicken', 'eggs', 'veggies', 'flowers'], BENTO_SLOTS = ['bt-a', 'bt-b', 'bt-c', 'bt-d'];
   var MOSAIC_TILES = ['veg1', 'photo1', 'seed', 'veg2', 'veg3', 'soil', 'care', 'veg4', 'veg5', 'photo2', 'veg6', 'harvest'];
   var MOSAIC_SLOTS = ['mz-a', 'mz-b', 'mz-c', 'mz-d', 'mz-e', 'mz-f', 'mz-g', 'mz-h', 'mz-i', 'mz-j', 'mz-k', 'mz-l'];
@@ -335,7 +346,7 @@
     if (a && /INPUT|SELECT/.test(a.tagName) && $('grid').contains(a)) { gridDirty = true; return; }
     gridDirty = false;
     var s = SEARCH.trim().toLowerCase();
-    var items = CAT.items.filter(function (i) {
+    var items = siteSort(CAT.items, 'items').filter(function (i) {
       return (FILTER === 'all' || i.category === FILTER) && (!s || (i.item + ' ' + i.category).toLowerCase().indexOf(s) >= 0);
     });
     if (REVEAL) [].forEach.call($('grid').querySelectorAll('.item'), function (el) { REVEAL.unobserve(el); });
@@ -536,13 +547,14 @@
   function heroPicks() {
     var FIRST = {};
     FIRST[CHICKEN] = 2; FIRST.Eggs = 1;
-    return CAT.items.filter(function (i) { return i.left > 0 && packs(i).length; })
+    var ranked = CAT.items.filter(function (i) { return i.left > 0 && packs(i).length; })
       .map(function (i, n) {
         var score = (i.photo ? 4 : 0) + (i.rating ? 2 : 0) + (i.mrp > i.price ? 1 : 0);
         return { it: i, first: FIRST[i.category] || 0, score: score, n: n };
       })
       .sort(function (a, b) { return b.first - a.first || b.score - a.score || a.n - b.n; })
-      .slice(0, 6).map(function (x) { return x.it; });
+      .map(function (x) { return x.it; });
+    return siteSort(ranked, 'hero').slice(0, 6);   // cards arranged in edit mode come first, in that order
   }
   function renderHero() {
     var box = $('heroItems');
@@ -2175,14 +2187,16 @@
       if (!el || el.querySelector(':scope > .ed-tools')) return;
       var h = '<div class="ed-tools">';
       if (o.move) h += '<button type="button" class="ed-move" data-ed="move" title="Drag to another spot">⠿ Move</button>';
-      if (o.img) h += '<button type="button" data-ed="img" data-k="' + o.img + '" title="Change the picture">📷</button>';
+      if (o.img) h += '<button type="button" data-ed="img" data-k="' + o.img + '" title="Change the picture">📷' + (o.label ? ' ' + o.label : '') + '</button>';
       if (o.color) h += '<label class="ed-col" title="Change the colour">🎨<input type="color" data-ed="color" data-k="' + o.color + '" value="' + edHex(siteColor(o.color)) + '"></label>';
       if ((o.img && siteImg(o.img, '')) || (o.color && siteColor(o.color))) h += '<button type="button" data-ed="reset" data-img="' + (o.img || '') + '" data-col="' + (o.color || '') + '" title="Back to the original">↺</button>';
       el.insertAdjacentHTML('beforeend', h + '</div>');
     };
-    add($('hero'), { img: 'hero.bg' });
+    add($('hero'), { img: 'hero.bg', label: 'Change background' });
     [].forEach.call(document.querySelectorAll('[data-color]'), function (el) { add(el, { color: 'section.' + el.dataset.color }); });
     [].forEach.call(document.querySelectorAll('#bento .bt'), function (el) { add(el, { move: 1, img: 'bento.' + el.dataset.tile, color: 'bento.' + el.dataset.tile }); });
+    // produce cards in the shop and on the landing page: move only (their pictures and prices come from the staff app)
+    [].forEach.call(document.querySelectorAll('#grid .item[data-key], #heroItems .hc[data-key]'), function (el) { add(el, { move: 1 }); });
     [].forEach.call(document.querySelectorAll('#mosaic .mz'), function (el) {
       var id = el.dataset.tile;
       add(el, { move: 1, img: /^photo/.test(id) ? 'mosaic.' + id : '', color: /^(seed|soil|care|harvest)$/.test(id) ? 'mosaic.' + id : '' });
@@ -2219,9 +2233,11 @@
     inp.click();
   }
 
-  /** Tiles: drag the ⠿ handle onto another tile in the same grid to swap them. */
+  /** Tiles and produce cards: drag the ⠿ handle onto another one in the same grid to swap them. */
+  var ED_MOVABLE = '.bt, .mz, #grid .item, #heroItems .hc';
+  function edId(el) { return el.dataset.tile || el.dataset.key || ''; }
   function edDragStart(e, handle) {
-    var tile = handle.closest('.bt, .mz'), grid = tile && tile.parentNode;
+    var tile = handle.closest(ED_MOVABLE), grid = tile && tile.parentNode;
     if (!tile) return;
     e.preventDefault();
     var r = tile.getBoundingClientRect(), ghost = tile.cloneNode(true);
@@ -2239,8 +2255,8 @@
     d.ghost.style.visibility = 'hidden';
     var under = document.elementFromPoint(e.clientX, e.clientY);
     d.ghost.style.visibility = '';
-    var t = under && under.closest('.bt, .mz');
-    t = t && t.parentNode === d.grid && t !== d.tile ? t : null;
+    var t = under && under.closest(ED_MOVABLE);
+    t = t && t.parentNode === d.grid && t !== d.tile && edId(t) ? t : null;   // not the fixed chicken card
     if (d.over !== t) {
       if (d.over) d.over.classList.remove('ed-target');
       if (t) t.classList.add('ed-target');
@@ -2255,12 +2271,27 @@
     d.tile.classList.remove('ed-lifted');
     if (!d.over) return;
     d.over.classList.remove('ed-target');
-    var key = d.grid.id === 'bento' ? 'bento' : 'mosaic', order = siteOrder(key, key === 'bento' ? BENTO_TILES : MOSAIC_TILES);
-    var a = order.indexOf(d.tile.dataset.tile), b = order.indexOf(d.over.dataset.tile);
-    if (a < 0 || b < 0) return;
-    order[a] = d.over.dataset.tile; order[b] = d.tile.dataset.tile;
+    var key, order;
+    if (d.grid.id === 'grid' || d.grid.classList.contains('hero-grid')) {
+      // produce cards: swap the two in the full list (the shop grid may be showing only one category)
+      key = d.grid.id === 'grid' ? 'items' : 'hero';
+      var list = key === 'items' ? siteSort(CAT.items, 'items') : heroPicks();
+      var bySlug = {};
+      CAT.items.forEach(function (it) { bySlug[it.key] = itemSlug(it); });
+      order = list.map(itemSlug);
+      var x = order.indexOf(bySlug[d.tile.dataset.key]), y = order.indexOf(bySlug[d.over.dataset.key]);
+      if (x < 0 || y < 0) return;
+      order[x] = bySlug[d.over.dataset.key]; order[y] = bySlug[d.tile.dataset.key];
+      order = order.slice(0, 40);   // the shop saves up to 40 names per list; anything after keeps its usual place
+    } else {
+      key = d.grid.id === 'bento' ? 'bento' : 'mosaic';
+      order = siteOrder(key, key === 'bento' ? BENTO_TILES : MOSAIC_TILES);
+      var a = order.indexOf(d.tile.dataset.tile), b = order.indexOf(d.over.dataset.tile);
+      if (a < 0 || b < 0) return;
+      order[a] = d.over.dataset.tile; order[b] = d.tile.dataset.tile;
+    }
     // The two tiles glide to their new spots (GSAP Flip matches old and new tiles by their name).
-    var named = function () { [].forEach.call(d.grid.children, function (el) { el.dataset.flipId = el.dataset.tile; }); };
+    var named = function () { [].forEach.call(d.grid.children, function (el) { if (edId(el)) el.dataset.flipId = edId(el); }); };
     named();
     var flip = G && window.Flip && !CALM ? Flip.getState(d.grid.children) : null;
     draftSet('order', key, order);

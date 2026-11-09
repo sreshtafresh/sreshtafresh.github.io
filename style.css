@@ -549,6 +549,9 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 .ed-ghost { position: fixed !important; z-index: 300; pointer-events: none; opacity: .85; rotate: 2deg; box-shadow: 0 30px 60px rgba(0, 0, 0, .35) !important; }
 .ed-lifted { opacity: .35; }
 .ed-target { outline: 3px dashed var(--gold); outline-offset: -3px; }
+#hero > .ed-tools { top: auto; bottom: 18px; left: 18px; right: auto; }   /* clear of the edit toolbar at the top */
+.editing .hc { position: relative; }   /* landing cards hold their move handle */
+.hc > .ed-tools, .item > .ed-tools { top: 6px; right: 6px; }
 .ed-bar {
   position: fixed; z-index: 120; left: 50%; top: calc(var(--top-h) + 10px); translate: -50% 0; display: flex; align-items: center; gap: 6px;
   padding: 6px 6px 6px 16px; border-radius: 999px; background: #0b2f1d; color: #fff; box-shadow: 0 14px 34px rgba(0, 0, 0, .35);
