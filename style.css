@@ -917,7 +917,7 @@ main.app-main { max-width: none; padding: 0; }
 .bt.has-cut .bt-ph, .bt.has-cut .bt-em { display: none; }
 .bt-cut {
   position: absolute; z-index: 0; pointer-events: none; width: auto; filter: drop-shadow(0 20px 26px rgba(0, 0, 0, .3));
-  transition: translate .5s cubic-bezier(.2, .7, .2, 1), rotate .5s cubic-bezier(.2, .7, .2, 1);
+  transition: translate .5s cubic-bezier(.2, .7, .2, 1), rotate .5s cubic-bezier(.2, .7, .2, 1), transform .5s cubic-bezier(.2, .7, .2, 1);
 }
 /* Each tile sizes its text from its own width (cqi = 1% of the tile), so text and picture keep their proportions. */
 .bt { container-type: inline-size; }
@@ -950,10 +950,10 @@ main.app-main { max-width: none; padding: 0; }
 /* the marigolds: a close-up of the picture in the right part of the tile (no fade) */
 .bt[data-tile="flowers"].has-cut .bt-cutbox { left: 44%; overflow: hidden; }
 .bt[data-tile="flowers"].has-cut .bt-cut { left: 0; right: auto; top: -18%; bottom: auto; width: 155%; height: 155%; object-fit: cover; object-position: 0% 30%; filter: none; }   /* the left end of the picture: the big yellow cluster */   /* no shadow: under so many flowers it merged into a dark box */
-.bt[data-tile="flowers"].has-cut:hover .bt-cut { translate: 0 -6px; }
-.bt-b:hover .bt-cut, .bt-c:hover .bt-cut, .bt-d:hover .bt-cut { translate: 0 -6px; }
+.bt[data-tile="flowers"].has-cut:hover .bt-cut { transform: scale(1.06); }
+.bt-b:hover .bt-cut, .bt-c:hover .bt-cut, .bt-d:hover .bt-cut { transform: scale(1.06); }   /* hover: zoom in (was: lift up) */
 .bt[data-tile="veggies"].has-cut .bt-txt, .bt[data-tile="flowers"].has-cut .bt-txt { max-width: 55%; }
-@keyframes bt-float { 50% { translate: 0 -10px; } }
+@keyframes bt-float { 50% { transform: scale(1.06); } }   /* the chicken tub gently zooms in and out (was: floating up and down) */
 @media (prefers-reduced-motion: reduce) { .bt-a .bt-cut { animation: none; } }
 .bt-em { position: absolute; right: 8%; top: 50%; translate: 0 -50%; font-size: clamp(70px, 8vw, 140px); opacity: .9; }
 .bt.off { filter: grayscale(.6); }
