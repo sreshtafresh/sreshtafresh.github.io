@@ -523,7 +523,7 @@
       '<div class="hc-ph Country-Chicken"><span class="em">🐓</span>' +
       (c.photo ? '<img src="' + esc(c.photo) + '" alt="' + esc(c.name) + '" loading="lazy" onerror="this.remove()">' : '') +
       '<span class="hc-off">Pre-book</span></div>' +
-      '<div class="hc-body"><div class="hc-name">' + esc(c.name) + '</div>' +
+      '<div class="hc-body"><div class="hc-name">Chicken</div>' +   // short: the full name was cut off on the small card
       '<div class="hc-row"><span class="hc-price">' + (c.price ? '<b>' + rs(c.price) + '</b>' : '<b>By weight</b>') + '</span>' +
       '<button class="hc-add" data-act="pre" aria-label="Reserve country chicken"' + (c.open ? '' : ' disabled') + '>+</button></div></div></div>';
   }
@@ -567,18 +567,36 @@
     if (!heroIntro && cards.length) {
       heroIntro = true;
       if (G && !CALM && box.getBoundingClientRect().top < innerHeight) {
-        G.from(cards, { y: 40, opacity: 0, scale: .95, duration: .55, ease: 'power3.out', stagger: .07, delay: .3, clearProps: 'transform,opacity' });
+        if (INTRO.waiting) { G.set(cards, { opacity: 0 }); INTRO.cards = true; playIntro(); }   // the text is waiting for these cards: both come in together
+        else cardsIn(cards, .1);
       }
     }
   }
-  /** Landing headline: the words rise into place one by one when the page opens. */
+  function cardsIn(cards, delay) {
+    G.fromTo(cards, { y: 40, opacity: 0, scale: .95 },
+      { y: 0, opacity: 1, scale: 1, duration: .55, ease: 'power3.out', stagger: .07, delay: delay, clearProps: 'transform,opacity' });
+  }
+  /** Landing intro: the text stays hidden until the produce cards have arrived from the shop (at most ~2.5 s),
+   *  then the headline words rise into place while the cards come in beside them. */
+  var INTRO = { waiting: false, split: null, cards: false, timedOut: false };
   function introHeadline() {
-    var h = document.querySelector('.hero-txt h1');
+    var txt = document.querySelector('.hero-txt'), h = txt && txt.querySelector('h1');
     if (!h || !G || !window.SplitText || CALM) return;
+    INTRO.waiting = true;
+    G.set(txt, { autoAlpha: 0 });
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () {
-      var split = SplitText.create(h, { type: 'words', mask: 'words' });
-      G.from(split.words, { yPercent: 110, opacity: 0, duration: .9, ease: 'power3.out', stagger: .08, delay: .1 });
+      INTRO.split = SplitText.create(h, { type: 'words', mask: 'words' });
+      playIntro();
     });
+    setTimeout(function () { INTRO.timedOut = true; playIntro(); }, 2500);   // slow connection: don't keep the text back
+  }
+  function playIntro() {
+    if (!INTRO.waiting || !INTRO.split || !(INTRO.cards || INTRO.timedOut)) return;
+    INTRO.waiting = false;
+    G.to('.hero-txt', { autoAlpha: 1, duration: .4 });
+    G.from(INTRO.split.words, { yPercent: 110, opacity: 0, duration: .9, ease: 'power3.out', stagger: .08, delay: .05 });
+    var cards = document.querySelectorAll('#heroItems .hc');
+    if (INTRO.cards && cards.length) cardsIn(cards, .15);
   }
   /** Compact card with a quick + button (landing screen and "From our fields").
    *  brief: name and price only, no pack size, so more of the photo shows (landing screen). */
