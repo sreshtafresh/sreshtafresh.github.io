@@ -315,8 +315,6 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 .rv { opacity: 0; transform: translateY(48px); transition: opacity .7s ease var(--rv-d, 0s), transform .9s cubic-bezier(.2, .7, .2, 1) var(--rv-d, 0s); }
 .rv.above { transform: translateY(-48px); }   /* faded out through the top; comes back down into place */
 .rv.in { opacity: 1; transform: none; }
-#bento.rv, #bento.rv.above { transform: scale(.88); transform-origin: 50% 40%; }   /* shop by category: zooms in instead of rising */
-#bento.rv.in { transform: none; }
 
 /* item cards pop up under the mouse (translate/scale stack on top of the glide's transform) */
 .item, .item.rv {
@@ -950,10 +948,10 @@ main.app-main { max-width: none; padding: 0; }
 /* the marigolds: a close-up of the picture in the right part of the tile (no fade) */
 .bt[data-tile="flowers"].has-cut .bt-cutbox { left: 44%; overflow: hidden; }
 .bt[data-tile="flowers"].has-cut .bt-cut { left: 0; right: auto; top: -18%; bottom: auto; width: 155%; height: 155%; object-fit: cover; object-position: 0% 30%; filter: none; }   /* the left end of the picture: the big yellow cluster */   /* no shadow: under so many flowers it merged into a dark box */
-.bt[data-tile="flowers"].has-cut:hover .bt-cut { transform: scale(1.06); }
-.bt-b:hover .bt-cut, .bt-c:hover .bt-cut, .bt-d:hover .bt-cut { transform: scale(1.06); }   /* hover: zoom in (was: lift up) */
+.bt[data-tile="flowers"].has-cut:hover .bt-cut { transform: scale(1.12); }
+.bt:hover .bt-cut { transform: scale(1.12); }   /* hover: the picture zooms / pops out */
 .bt[data-tile="veggies"].has-cut .bt-txt, .bt[data-tile="flowers"].has-cut .bt-txt { max-width: 55%; }
-@keyframes bt-float { 50% { transform: scale(1.06); } }   /* the chicken tub gently zooms in and out (was: floating up and down) */
+@keyframes bt-float { 50% { translate: 0 -10px; } }
 @media (prefers-reduced-motion: reduce) { .bt-a .bt-cut { animation: none; } }
 .bt-em { position: absolute; right: 8%; top: 50%; translate: 0 -50%; font-size: clamp(70px, 8vw, 140px); opacity: .9; }
 .bt.off { filter: grayscale(.6); }
