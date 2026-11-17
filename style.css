@@ -315,6 +315,8 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 .rv { opacity: 0; transform: translateY(48px); transition: opacity .7s ease var(--rv-d, 0s), transform .9s cubic-bezier(.2, .7, .2, 1) var(--rv-d, 0s); }
 .rv.above { transform: translateY(-48px); }   /* faded out through the top; comes back down into place */
 .rv.in { opacity: 1; transform: none; }
+#bento.rv, #bento.rv.above { transform: scale(.88); transform-origin: 50% 40%; }   /* shop by category: zooms in instead of rising */
+#bento.rv.in { transform: none; }
 
 /* item cards pop up under the mouse (translate/scale stack on top of the glide's transform) */
 .item, .item.rv {
