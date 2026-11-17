@@ -948,6 +948,7 @@ main.app-main { max-width: none; padding: 0; }
 /* the marigolds: a close-up of the picture in the right part of the tile (no fade) */
 .bt[data-tile="flowers"].has-cut .bt-cutbox { left: 44%; overflow: hidden; }
 .bt[data-tile="flowers"].has-cut .bt-cut { left: 0; right: auto; top: -18%; bottom: auto; width: 155%; height: 155%; object-fit: cover; object-position: 0% 30%; filter: none; }   /* the left end of the picture: the big yellow cluster */   /* no shadow: under so many flowers it merged into a dark box */
+.bt[data-tile="flowers"].has-cut .bt-cut { transform-origin: 0 30%; }   /* zooms from its left edge, so no flower gets cut at the frame's edge */
 .bt[data-tile="flowers"].has-cut:hover .bt-cut { transform: scale(1.12); }
 .bt:hover .bt-cut { transform: scale(1.12); }   /* hover: the picture zooms / pops out */
 .bt[data-tile="veggies"].has-cut .bt-txt, .bt[data-tile="flowers"].has-cut .bt-txt { max-width: 55%; }
