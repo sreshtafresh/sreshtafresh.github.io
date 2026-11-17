@@ -478,7 +478,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 .mz-g { grid-area: g; } .mz-h { grid-area: h; } .mz-i { grid-area: i; } .mz-j { grid-area: j; } .mz-k { grid-area: k; } .mz-l { grid-area: l; }
 .mz { position: relative; overflow: hidden; margin: 0; border-radius: clamp(16px, 1.6vw, 26px); }
 .mz-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: #efe4c8; color: #0b2f1d; font-weight: 700; font-size: 14px; }
-.mz-soon span { font-size: 30px; }
+.mz-soon span { font-size: clamp(48px, 4.4vw, 72px); line-height: 1; }
 .mz-soon p { margin: 0; }
 /* vegetable tile: photo fills it, name / price / + over a dark fade at the bottom */
 .mz-veg { background: #1b2a20; color: #fff; }
@@ -503,7 +503,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
 .mz-photo figcaption { position: absolute; left: 12px; bottom: 12px; padding: 6px 12px; border-radius: 999px; background: rgba(11, 47, 29, .78); color: #fff; font-size: 13px; font-weight: 700; }
 /* growing details */
 .mz-fact { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; padding: clamp(12px, 1.3vw, 22px); }
-.mz-fact span { font-size: clamp(26px, 2.4vw, 40px); margin-bottom: auto; }
+.mz-fact span { font-size: clamp(46px, 4.6vw, 80px); line-height: 1; margin-bottom: auto; }
 .mz-fact small { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .mz-fact p { margin: 0; font-size: clamp(13px, .95vw, 15.5px); font-weight: 600; line-height: 1.35; }
 .mz-fact.gold { background: var(--gold); color: #0b2f1d; }
