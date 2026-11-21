@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <!-- ?v= is bumped on every update so browsers fetch the new file instead of an old saved copy -->
-  <link rel="stylesheet" href="style.css?v=20261121a">
+  <link rel="stylesheet" href="style.css?v=20261121b">
 </head>
 <body>
   <!-- Header floats over the page: clear over the hero photo, then takes on the colour of the section beneath
@@ -140,10 +140,36 @@
     <section id="view-done" class="view"></section>
   </main>
 
-  <footer class="site-foot" data-tone="light" data-color="footer">
-    <nav><a href="contact.html">Contact us</a><a href="terms.html">Terms &amp; Conditions</a><a href="privacy.html">Privacy Policy</a><a href="refund.html">Refund &amp; Cancellation</a><a href="shipping.html">Delivery Policy</a></nav>
-    <p class="foot-contact">📍 <span data-edit="contact.address">Madhurwada, Visakhapatnam</span> · 📞 <a data-tel href="tel:+917788994449"><span data-edit="contact.phone">+91 77889 94449</span></a> · ✉️ <a data-mail href="mailto:team@sreshtafresh.com"><span data-edit="contact.email">team@sreshtafresh.com</span></a></p>
-    <p data-edit="footer.text">© Sreshta Fresh</p>
+  <!-- FOOTER: brand + Instagram | shop links | contact (all text editable in edit mode); gold line; © and policies.
+       The contact, policy and payment pages have the same footer (they read the published text through contact.js). -->
+  <footer class="site-foot" data-tone="dark" data-color="footer">
+    <div class="sf-grid">
+      <div class="sf-brand">
+        <a href="#" class="sf-logo" aria-label="Sreshta Fresh home"><img src="logo-light.png" alt="Sreshta Fresh by Sreshta Farms" loading="lazy"></a>
+        <p data-edit="footer.tagline">Naturally grown on our farm, picked fresh and brought to your door.</p>
+        <a class="sf-pill" href="https://www.instagram.com/sreshtafresh/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6"/></svg>@sreshtafresh</a>
+      </div>
+      <div class="sf-col">
+        <h4>Shop</h4>
+        <button data-cat="Veggies" data-promo="1">Veggies</button>
+        <button data-cat="Eggs" data-promo="1">Country Eggs</button>
+        <button data-cat="Country Chicken" data-promo="1">Country Chicken</button>
+        <button data-cat="Flowers" data-promo="1">Flowers</button>
+        <a href="#subscribe">Weekly plans</a>
+        <a href="#orders">My orders</a>
+      </div>
+      <div class="sf-col sf-contact">
+        <h4>Contact</h4>
+        <p><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span data-edit="contact.address">Madhurwada, Visakhapatnam</span></p>
+        <p><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg><a data-tel href="tel:+917788994449"><span data-edit="contact.phone">+91 77889 94449</span></a></p>
+        <p><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><a data-mail href="mailto:team@sreshtafresh.com"><span data-edit="contact.email">team@sreshtafresh.com</span></a></p>
+        <a class="sf-pill gold" data-wa href="https://wa.me/917788994449" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/></svg>Chat on WhatsApp</a>
+      </div>
+    </div>
+    <div class="sf-bottom">
+      <p data-edit="footer.text">© Sreshta Fresh</p>
+      <nav><a href="contact.html">Contact us</a><a href="terms.html">Terms &amp; Conditions</a><a href="privacy.html">Privacy Policy</a><a href="refund.html">Refund &amp; Cancellation</a><a href="shipping.html">Delivery Policy</a></nav>
+    </div>
   </footer>
 
   <div class="basket-bar" id="basketBar" hidden>
@@ -181,7 +207,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MotionPathPlugin.min.js"></script>
-  <script src="config.js?v=20261121a"></script>
-  <script src="app.js?v=20261121a"></script>
+  <script src="config.js?v=20261121b"></script>
+  <script src="app.js?v=20261121b"></script>
 </body>
 </html>

@@ -1104,11 +1104,49 @@ input:focus, textarea:focus { outline: none; border-color: var(--ink); }
 .shop-head { justify-content: flex-start; }
 
 /* ---------- footer + policy pages ---------- */
-.site-foot { border-top: 1px solid var(--line); background: var(--soft); padding: 22px clamp(16px, 4vw, 48px) calc(96px + env(safe-area-inset-bottom)); text-align: center; }
-.site-foot nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; }
-.site-foot a { color: var(--ink); font-weight: 600; font-size: 14px; text-decoration: none; }
-.site-foot a:hover { text-decoration: underline; }
-.site-foot p { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+/* ---------- footer: deep green, brand + shop + contact columns, gold line, © and policies ---------- */
+.site-foot {
+  position: relative; border-top: 0; text-align: left; color: rgba(255, 255, 255, .78);
+  background: radial-gradient(110% 90% at 0% 0%, #17512f 0%, #0b2f1d 58%) #0b2f1d;
+  padding: clamp(44px, 6vw, 76px) clamp(16px, 4vw, 48px) calc(96px + env(safe-area-inset-bottom));   /* room for the basket bar */
+}
+.sf-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1.3fr; gap: 36px clamp(28px, 5vw, 72px); }
+.sf-logo { display: inline-block; }
+.sf-logo img { height: clamp(56px, 5vw, 72px); width: auto; display: block; }
+.sf-brand p { margin: 16px 0 20px; max-width: 32ch; font-size: 15px; line-height: 1.6; color: rgba(255, 255, 255, .75); }
+.site-foot h4 { margin: 8px 0 16px; color: var(--gold); font-size: 12.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.sf-col > a, .sf-col > button {
+  display: block; width: fit-content; padding: 5px 0; border: 0; background: none; cursor: pointer; text-align: left;
+  color: #fff; font: 600 15px/1.4 Montserrat, system-ui, sans-serif; text-decoration: none; transition: color .2s ease, translate .2s ease;
+}
+.sf-col > a:hover, .sf-col > button:hover { color: var(--gold); translate: 4px 0; }
+.sf-contact p { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; color: #fff; font-size: 15px; line-height: 1.45; }
+.sf-contact p a { color: #fff; text-decoration: none; }
+.sf-contact p a:hover { color: var(--gold); }
+.site-foot svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sf-contact p svg { color: var(--gold); margin-top: 1px; }
+.sf-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .28);
+  color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.sf-pill:hover { background: #fff; color: #0b2f1d; border-color: #fff; }
+.sf-pill.gold { margin-top: 4px; background: var(--gold); border-color: var(--gold); color: #0b2f1d; }
+.sf-pill.gold:hover { background: #fff; border-color: #fff; }
+.sf-bottom {
+  max-width: 1200px; margin: clamp(36px, 5vw, 56px) auto 0; padding-top: 20px; border-top: 1px solid rgba(248, 178, 38, .5);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 28px;
+}
+.sf-bottom p { margin: 0; font-size: 13px; color: rgba(255, 255, 255, .6); }
+.sf-bottom nav { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.sf-bottom nav a { color: rgba(255, 255, 255, .82); font-size: 13.5px; font-weight: 600; text-decoration: none; }
+.sf-bottom nav a:hover { color: var(--gold); }
+.editing .site-foot [data-edit] { outline-color: rgba(248, 178, 38, .9); }
+@media (max-width: 800px) {
+  .sf-grid { grid-template-columns: 1fr 1fr; }
+  .sf-brand { grid-column: 1 / -1; }
+  .sf-bottom { flex-direction: column-reverse; align-items: flex-start; }
+}
+@media (max-width: 460px) { .sf-grid { grid-template-columns: 1fr; } }
 main.legal { max-width: 760px; padding-bottom: 40px; }
 .legal h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 900; margin: 6px 0 6px; }
 .legal h2 { font-size: 19px; margin: 26px 0 8px; }

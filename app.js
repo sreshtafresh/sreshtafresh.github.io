@@ -19,6 +19,8 @@
   var PACK = {};                  // item key -> pack size chosen in the card's dropdown
   var ME = load('sf_me', {});     // phone, name, flat, apartment
   var FILTER = 'all';
+  var GO_CAT = /[?&]cat=([^&#]+)/.exec(location.search);   // ./?cat=Veggies from the footer of the other pages
+  if (GO_CAT) { FILTER = decodeURIComponent(GO_CAT[1].replace(/\+/g, ' ')); GO_CAT = true; }
   var SEARCH = '';                // text typed in the header search
   var VIEW = 'shop';
   var LAST = load('sf_last', null);
@@ -71,6 +73,7 @@
     var digits = ph ? ph.textContent.replace(/\D/g, '') : '';
     if (digits.length === 10) digits = '91' + digits;
     [].forEach.call(document.querySelectorAll('a[data-tel]'), function (a) { if (digits) a.href = 'tel:+' + digits; });
+    [].forEach.call(document.querySelectorAll('a[data-wa]'), function (a) { if (digits) a.href = 'https://wa.me/' + digits; });
     [].forEach.call(document.querySelectorAll('a[data-mail]'), function (a) { if (em && /@/.test(em.textContent)) a.href = 'mailto:' + em.textContent.trim(); });
     var hero = siteImg('hero.bg', '');
     if (hero) $('hero').style.setProperty('--hero-img', 'url("' + hero.replace(/"/g, '%22') + '")');
@@ -157,6 +160,10 @@
     var sig = JSON.stringify([d.items, d.chicken, d.shop.afterCutoff, d.banners, SITE]);
     var typing = EDITING && document.activeElement && document.activeElement.isContentEditable;   // don't redraw under the cursor
     if (sig !== lastSig && !typing) { lastSig = sig; renderShop(); }
+    if (GO_CAT) {   // opened from a footer link on another page (./?cat=Veggies): show that category
+      GO_CAT = false;
+      setTimeout(function () { $('grid').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+    }
     updateBasketBar();
     if (sheetMode === 'basket') renderBasketLines();
   }
