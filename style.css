@@ -1132,6 +1132,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--ink); }
 .sf-pill:hover { background: #fff; color: #0b2f1d; border-color: #fff; }
 .sf-pill.gold { margin-top: 8px; padding: 11px 22px 11px 18px; gap: 10px; background: var(--gold); border-color: var(--gold); color: #0b2f1d; }
 .sf-pill.gold:hover { background: #fff; border-color: #fff; }
+.site-foot .sf-wa-ic { width: 22px; height: 22px; stroke: none; }   /* the coloured WhatsApp logo: green bubble, white phone (colours set in the SVG) */
 .sf-bottom {
   max-width: 1200px; margin: clamp(36px, 5vw, 56px) auto 0; padding-top: 20px; border-top: 1px solid rgba(248, 178, 38, .5);
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 28px;
