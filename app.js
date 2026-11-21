@@ -28,7 +28,7 @@
   var PAYING = false;   // our own items are on hold while the Razorpay window is open
   var sheetMode = '';
   var FORM = { fulfilment: 'Pickup', notes: '', pay: 'Online', coupon: null };   // coupon: {code, pct} once checked
-  var PRE = { kg: 1, fulfilment: 'Pickup', notes: '' };
+  var PRE = { kg: 1, fulfilment: 'Pickup', notes: '', pay: 'Online' };
   var MO = { phone: '', data: null, busy: false };
 
   // ---------- editable content (text, pictures, colours) published from the website's edit mode ----------
@@ -328,7 +328,7 @@
     T.chicken = { name: 'chicken',
       photo: (ch && ch.photo) || (c && c.photo), em: '🐓', cut: 'images/bento-chicken.png',
       tag: c && c.sunday && !CAT.shop.isSunday ? 'Pre-book for ' + fmtD(c.sunday) : 'Fresh this Sunday',
-      title: 'Country Chicken', sub: 'From our farm, sold by weight. Pay when you receive it.',
+      title: 'Country Chicken', sub: 'From our farm, sold by weight. Pay online or when you receive it.',
       price: chPrice ? '<b>' + rs(chPrice) + '</b><span>/kg</span>' : '',
       btn: ch ? ' data-cat="' + esc(CHICKEN) + '" data-promo="1">Shop now →' : chOpen ? ' data-act="pre">Reserve now →' : (c ? ' disabled>Opens ' + esc(fmtD(c.opensOn)) : '')
     };
@@ -549,7 +549,7 @@
       '<span class="badge">Pre-book</span></div>' +
       '<div class="info"><div class="kicker">' + esc(CHICKEN) + '</div>' +
       '<div class="name-row"><div class="name">' + esc(c.name) + '</div><div class="sub">' + esc(c.when) + '</div></div>' +
-      '<div class="sub">Reserve now, sold by weight, pay when you receive it on Sunday.</div>' +
+      '<div class="sub">Reserve now, priced by the weight you choose. Pay online now or when you receive it on Sunday.</div>' +
       '<div class="buy"><div class="price">' + (c.price ? '<b>' + rs(c.price) + '</b><span>/ kg</span>' : '<b>By weight</b>') + '</div>' +
       '<button class="btn gold" data-act="pre"' + (c.open ? '' : ' disabled') + '>' + (c.open ? 'Reserve' : 'Opens soon') + '</button></div>' +
       '</div></div>';
@@ -1585,25 +1585,49 @@
   }
 
   // ---------- chicken pre-order ----------
+  // Priced by the reserved weight (kg × the per-kg price): pay now online, or pay when you receive it.
+  function prePrice() { return (CAT && CAT.chicken && CAT.chicken.lastPrice) || 0; }
+  function canPayPre() { return !!(CAT && CAT.shop.razorpay) && prePrice() > 0; }
+  function preOnline() { return canPayPre() && PRE.pay === 'Online'; }
+  function preTotal() { return Math.round(PRE.kg * prePrice()); }
+  function preLabel() { return preOnline() ? 'Pay ' + rs(preTotal()) + ' & reserve' : 'Reserve chicken'; }
+  function preInfoTxt() {
+    return preOnline() ? '💳 Pay securely now (UPI, card or net banking). We hand over exactly ' + q(PRE.kg) + ' kg on Sunday. Paid reservations can\'t be cancelled.'
+      : '💵 No payment now. Pay by Cash or PhonePe when you receive it.';
+  }
+  function preRefresh() {
+    if ($('pr-total')) $('pr-total').textContent = prePrice() ? rs(preTotal()) : 'By weight';
+    if ($('pr-payinfo')) $('pr-payinfo').textContent = preInfoTxt();
+    var btn = $('preBtn');
+    if (btn && !btn.disabled) btn.textContent = preLabel();
+  }
   function openPre() {
-    var c = CAT.chicken;
+    var c = CAT.chicken, price = prePrice();
     sheetMode = 'pre';
     showSheet('<div class="sheet-head"><h2>🐓 Reserve country chicken</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
-      '<div class="card"><b>For ' + fmtD(c.sunday) + '</b><div class="hint" style="margin:4px 0 12px">Sold by weight in 0.5 kg steps. The final price depends on the actual weight' +
-      (c.lastPrice ? ' (last price ' + rs(c.lastPrice) + '/kg)' : '') + '. Pay when you receive it.</div>' +
+      '<div class="card"><b>For ' + fmtD(c.sunday) + '</b><div class="hint" style="margin:4px 0 12px">' +
+      (price ? rs(price) + ' per kg, in 0.5 kg steps (0.5 kg = ' + rs(Math.round(price / 2)) + ').' : 'Sold by weight in 0.5 kg steps.') + '</div>' +
       '<label>How much?</label><div class="stepper light" style="max-width:220px"><button data-act="pdec">−</button>' +
-      '<input id="pr-kg" type="number" inputmode="decimal" step="0.5" min="0.5" value="' + PRE.kg + '"><span class="u">kg</span><button data-act="pinc">+</button></div></div>' +
+      '<input id="pr-kg" type="number" inputmode="decimal" step="0.5" min="0.5" value="' + PRE.kg + '"><span class="u">kg</span><button data-act="pinc">+</button></div>' +
+      '<div class="total"><span>Total</span><span id="pr-total"></span></div></div>' +
       '<div class="card"><h3 style="margin-bottom:10px">Your details</h3>' + custFields('pr') +
       '<label>Pickup or delivery?</label>' + toggle('PRE') +
+      (canPayPre() ? '<label>How would you like to pay?</label><div class="toggle" data-tg="PREPAY">' +
+        [['Online', '💳 Pay now'], ['Delivery', '💵 Pay on delivery']].map(function (o) {
+          return '<button type="button" data-fv="' + o[0] + '" class="' + (PRE.pay === o[0] ? 'on' : '') + '">' + o[1] + '</button>';
+        }).join('') + '</div>' + (CAT.shop.razorpayTest ? '<div class="hint" style="margin:-4px 0 10px">🧪 Test mode: no real money is taken.</div>' : '') : '') +
+      '<div class="hint" id="pr-payinfo" style="margin:0 0 12px"></div>' +
       '<div class="field" style="margin:0"><label for="pr-notes">Note (optional)</label><input id="pr-notes" maxlength="200" placeholder="e.g. curry cut"></div></div>' +
-      '<div id="pr-err"></div><button class="btn gold big wide" id="preBtn" data-act="preSubmit">Reserve chicken</button>');
+      '<div id="pr-err"></div><button class="btn gold big wide" id="preBtn" data-act="preSubmit"></button>');
     bindCust('pr');
+    preRefresh();
   }
   function preKg(delta) {
     var v = Number($('pr-kg').value) || 0;
     v = Math.max(0.5, Math.min(20, Math.round((v + delta) * 2) / 2));
     PRE.kg = v;
     $('pr-kg').value = v;
+    preRefresh();
   }
   function submitPre() {
     var c = readCust('pr');
@@ -1612,6 +1636,8 @@
     if (kg < 0.5) return toast('Choose at least 0.5 kg.', true);
     var btn = $('preBtn');
     if (btn.disabled) return;
+    PRE.kg = kg;
+    if (preOnline()) return payPre(c, kg, btn);
     btn.disabled = true;
     btn.textContent = 'Reserving…';
     if (PRE.reqKg !== kg) { PRE.reqId = newReqId(); PRE.reqKg = kg; }
@@ -1627,16 +1653,77 @@
       }
       PRE.reqId = ''; PRE.reqKg = null;
       closeSheet();
-      showSheet('<div class="done-top"><div class="tick">✓</div><h2>Chicken reserved!</h2><div class="oid">' + q(r.preorder.kg) + ' kg for ' + fmtD(r.preorder.sunday) + '</div></div>' +
-        '<div class="payinfo">We\'ll weigh it on Sunday and send you the bill. Pay by Cash or PhonePe when you receive it.</div>' +
-        '<div class="actions">' + contactButtons('Hi! I reserved ' + q(r.preorder.kg) + ' kg country chicken for ' + fmtD(r.preorder.sunday) + ' (' + r.preorder.id + ').') +
-        '<button class="btn ghost wide" data-act="close">Done</button></div>');
-      sheetMode = 'info';
+      preDone(r.preorder);
     }).catch(function () {
       $('pr-err').innerHTML = '<div class="note err" style="margin:0 0 12px">We couldn\'t reach the shop. Check your internet and try again.</div>';
       btn.disabled = false;
       btn.textContent = 'Reserve chicken';
     });
+  }
+  function preDone(p) {
+    showSheet('<div class="done-top"><div class="tick">✓</div><h2>Chicken reserved!</h2><div class="oid">' + q(p.kg) + ' kg for ' + fmtD(p.sunday) + '</div></div>' +
+      '<div class="payinfo">' + (p.paidOnline ? '💳 Paid ' + rs(p.paid) + '. We\'ll hand over exactly ' + q(p.kg) + ' kg on Sunday. Nothing more to pay.'
+        : 'Pay by Cash or PhonePe when you receive it on Sunday.') + '</div>' +
+      '<div class="actions">' + contactButtons('Hi! I reserved ' + q(p.kg) + ' kg country chicken for ' + fmtD(p.sunday) + ' (' + p.id + ').') +
+      '<button class="btn ghost wide" data-act="close">Done</button></div>');
+    sheetMode = 'info';
+  }
+  /** Reservation paid online: the shop works out the amount, Razorpay takes it, the shop checks it (like weekly plans). */
+  var PRE_REQ = { id: '', sig: '' };   // same request id on a retry, so the shop never saves the reservation twice
+  function payPre(c, kg, btn) {
+    var sig = [kg, c.phone, PRE.fulfilment].join('|');
+    if (PRE_REQ.sig !== sig) { PRE_REQ.id = newReqId(); PRE_REQ.sig = sig; }
+    btn.disabled = true;
+    btn.textContent = 'Opening secure payment…';
+    var again = function (msg) { btn.disabled = false; btn.textContent = preLabel(); if (msg) toast(msg, true); };
+    Promise.all([loadRazorpay(), apiPost({
+      action: 'startPrePay', reqId: PRE_REQ.id, phone: c.phone, name: c.name, flat: c.flat, apartment: c.apartment,
+      kg: kg, fulfilment: PRE.fulfilment, notes: $('pr-notes').value.trim()
+    })]).then(function (res) {
+      var r = res[1];
+      if (!r.ok) { $('pr-err').innerHTML = '<div class="note err" style="margin:0 0 12px">' + esc(r.error) + '</div>'; return again(); }
+      var finished = false;
+      var rz = new window.Razorpay({
+        key: r.pay.keyId, amount: r.pay.amount, currency: 'INR', order_id: r.pay.rzpOrderId,
+        name: shop().name || 'Sreshta Fresh', description: 'Country chicken ' + q(r.pay.kg) + ' kg',
+        prefill: { name: c.name, contact: '+91' + c.phone }, notes: { shop_preorder: r.pay.preId }, theme: { color: '#015c30' },
+        handler: function (resp) { finished = true; confirmPre(r.pay, resp, 0); },
+        modal: { confirm_close: true, ondismiss: function () { if (!finished) again('Payment not completed, so the chicken isn\'t reserved yet. You can try again, or choose Pay on delivery.'); } }
+      });
+      rz.on('payment.failed', function (resp) {
+        toast('Payment failed: ' + ((resp.error && resp.error.description) || 'please try again') + '. You can try again in the same window.', true);
+      });
+      rz.open();
+    }).catch(function () { again('We couldn\'t reach the payment service. Check your internet and try again.'); });
+  }
+  function confirmPre(pay, resp, attempt) {
+    showSheet('<div class="done-top"><div class="tick">⏳</div><h2>Confirming your payment…</h2><div class="oid">Please don\'t close this page.</div></div>');
+    sheetMode = 'info';
+    apiPost({
+      action: 'confirmPre', preId: pay.preId, razorpay_payment_id: resp.razorpay_payment_id,
+      razorpay_order_id: resp.razorpay_order_id, razorpay_signature: resp.razorpay_signature
+    }).then(function (r) {
+      if (!r.ok) return preUnconfirmed(pay, r.error);
+      PRE_REQ.sig = '';
+      if (r.preorder.status === 'Cancelled') {   // the chicken ran out while paying: refunded automatically
+        showSheet('<div class="done-top"><div class="tick">!</div><h2>Sorry, the chicken just ran out</h2></div>' +
+          '<div class="note">Someone reserved the last of this week\'s chicken while you were paying. Your ' + rs(pay.total) +
+          ' has been <b>refunded automatically</b> (it can take a few days to show).</div><div class="actions" style="margin-top:14px"><button class="btn ghost wide" data-act="close">OK</button></div>');
+        return;
+      }
+      preDone(r.preorder);
+    }).catch(function () {   // no answer (connection dropped): ask again a few times
+      if (attempt < 3) return setTimeout(function () { confirmPre(pay, resp, attempt + 1); }, 2000);
+      preUnconfirmed(pay, '');
+    });
+  }
+  function preUnconfirmed(pay, why) {
+    showSheet('<div class="done-top"><div class="tick">!</div><h2>Payment received, confirming</h2><div class="oid">' + q(pay.kg) + ' kg country chicken</div></div>' +
+      '<div class="note">' + (why ? esc(why) + ' ' : '') + 'Please <b>don\'t pay again</b>. Your reservation will show in <b>My orders</b> ' +
+      'once the payment is confirmed with Razorpay. If it doesn\'t, contact us.</div>' +
+      '<div class="actions" style="margin-top:14px">' + contactButtons('Hi! I paid ' + rs(pay.total) + ' for ' + q(pay.kg) + ' kg chicken (' + pay.preId + ') but it wasn\'t confirmed.') +
+      '<a class="btn ghost wide" href="#orders">🧾 My orders</a></div>');
+    sheetMode = 'info';
   }
 
   // ---------- order placed ----------
@@ -1736,7 +1823,8 @@
       var cls = p.status === 'Open' ? 'pending' : p.status === 'Delivered' ? '' : 'cancel';
       h += '<div class="card"><div class="ord-head"><div><b>🐓 Chicken pre-order · ' + q(p.kg) + ' kg</b><div class="ord-items">For ' + fmtD(p.sunday) + '</div></div>' +
         '<span class="chip ' + cls + '">' + (p.status === 'Open' ? 'Reserved' : esc(p.status)) + '</span></div>' +
-        (p.status === 'Open' ? '<div class="actions" style="margin-top:10px"><button class="btn danger" data-act="cancelPre" data-id="' + esc(p.id) + '">Cancel reservation</button></div>' : '') + '</div>';
+        (p.paidOnline ? '<div class="hint" style="margin:6px 0 0">💳 Paid ' + rs(p.paid) + ' online · paid reservations can\'t be cancelled</div>' : '') +
+        (p.status === 'Open' && !p.paidOnline ? '<div class="actions" style="margin-top:10px"><button class="btn danger" data-act="cancelPre" data-id="' + esc(p.id) + '">Cancel reservation</button></div>' : '') + '</div>';
     });
     d.orders.forEach(function (o) {
       var open = (o.status === 'Placed' || o.status === 'Packed') && !o.planId;   // plan deliveries can't be cancelled
@@ -2467,6 +2555,9 @@
         FORM.pay = t.dataset.fv;
         $('bk-payinfo').textContent = payInfoTxt();
         if (!$('placeBtn').disabled) $('placeBtn').textContent = placeLabel();
+      } else if (tg === 'PREPAY') {
+        PRE.pay = t.dataset.fv;
+        preRefresh();
       } else {
         (tg === 'PRE' ? PRE : FORM).fulfilment = t.dataset.fv;
       }
@@ -2512,6 +2603,11 @@
     else if (act === 'star') pickStar(t);
     else if (act === 'rateSend') sendRate();
     else if (act === 'rateSkip') skipAsk(t.dataset.id);
+  });
+  document.addEventListener('input', function (e) {   // chicken reservation: the total follows a typed weight
+    if (e.target.id !== 'pr-kg') return;
+    var v = Math.round((Number(e.target.value) || 0) * 2) / 2;
+    if (v >= 0.5 && v <= 20) { PRE.kg = v; preRefresh(); }
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
