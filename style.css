@@ -1115,11 +1115,11 @@ input:focus, textarea:focus { outline: none; border-color: var(--ink); }
 .sf-logo img { height: clamp(56px, 5vw, 72px); width: auto; display: block; }
 .sf-brand p { margin: 16px 0 20px; max-width: 32ch; font-size: 15px; line-height: 1.6; color: rgba(255, 255, 255, .75); }
 .site-foot h4 { margin: 8px 0 16px; color: var(--gold); font-size: 12.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
-.sf-col > a, .sf-col > button {
+.sf-col > a:not(.sf-pill), .sf-col > button {
   display: block; width: fit-content; padding: 5px 0; border: 0; background: none; cursor: pointer; text-align: left;
   color: #fff; font: 600 15px/1.4 Montserrat, system-ui, sans-serif; text-decoration: none; transition: color .2s ease, translate .2s ease;
 }
-.sf-col > a:hover, .sf-col > button:hover { color: var(--gold); translate: 4px 0; }
+.sf-col > a:not(.sf-pill):hover, .sf-col > button:hover { color: var(--gold); translate: 4px 0; }
 .sf-contact p { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; color: #fff; font-size: 15px; line-height: 1.45; }
 .sf-contact p a { color: #fff; text-decoration: none; }
 .sf-contact p a:hover { color: var(--gold); }
@@ -1130,7 +1130,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--ink); }
   color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; transition: background-color .2s ease, color .2s ease, border-color .2s ease;
 }
 .sf-pill:hover { background: #fff; color: #0b2f1d; border-color: #fff; }
-.sf-pill.gold { margin-top: 4px; background: var(--gold); border-color: var(--gold); color: #0b2f1d; }
+.sf-pill.gold { margin-top: 8px; padding: 11px 22px 11px 18px; gap: 10px; background: var(--gold); border-color: var(--gold); color: #0b2f1d; }
 .sf-pill.gold:hover { background: #fff; border-color: #fff; }
 .sf-bottom {
   max-width: 1200px; margin: clamp(36px, 5vw, 56px) auto 0; padding-top: 20px; border-top: 1px solid rgba(248, 178, 38, .5);
