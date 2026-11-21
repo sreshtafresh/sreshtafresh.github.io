@@ -1,5 +1,6 @@
 User-agent: *
 Disallow: /pay.html
 Disallow: /editmainpage
+Disallow: /staff
 
 Sitemap: https://sreshtafresh.com/sitemap.xml

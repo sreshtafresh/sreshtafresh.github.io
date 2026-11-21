@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Staff · Sreshta Fresh</title>
+  <link rel="icon" href="../icon.png">
+  <!-- sreshtafresh.com/staff → the staff app (the Apps Script web app in config.js; it asks for the PIN). -->
+  <script src="../config.js"></script>
+</head>
+<body style="font-family:system-ui,sans-serif;padding:24px;background:#0b2f1d;color:#fff">
+  <p id="msg">Opening the Sreshta Fresh staff app…</p>
+  <script>
+    var url = (window.SF_CONFIG || {}).API_URL || '';
+    if (/^https:\/\/script\.google\.com\//.test(url)) {
+      location.replace(url);
+      document.getElementById('msg').innerHTML = 'Opening the staff app… <a style="color:#f8b226" href="' + url + '">Tap here if it doesn\'t open</a>.';
+    } else {
+      document.getElementById('msg').textContent = 'The staff app address isn\'t set (config.js). On the local test copy, open the staff app from the farm-app folder instead.';
+    }
+  </script>
+</body>
+</html>
