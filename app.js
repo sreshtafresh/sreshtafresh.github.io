@@ -66,6 +66,12 @@
       if (html != null && el.innerHTML !== html) el.innerHTML = html;   // the server only lets simple emphasis through
     });
     [].forEach.call(document.querySelectorAll('[data-color]'), function (el) { el.style.background = siteColor('section.' + el.dataset.color); });
+    // footer contact details: the call / email links follow the edited text
+    var ph = document.querySelector('[data-edit="contact.phone"]'), em = document.querySelector('[data-edit="contact.email"]');
+    var digits = ph ? ph.textContent.replace(/\D/g, '') : '';
+    if (digits.length === 10) digits = '91' + digits;
+    [].forEach.call(document.querySelectorAll('a[data-tel]'), function (a) { if (digits) a.href = 'tel:+' + digits; });
+    [].forEach.call(document.querySelectorAll('a[data-mail]'), function (a) { if (em && /@/.test(em.textContent)) a.href = 'mailto:' + em.textContent.trim(); });
     var hero = siteImg('hero.bg', '');
     if (hero) $('hero').style.setProperty('--hero-img', 'url("' + hero.replace(/"/g, '%22') + '")');
     else $('hero').style.removeProperty('--hero-img');
