@@ -1189,3 +1189,20 @@ main.legal { max-width: 760px; padding-bottom: 40px; }
   .bt-c .bt-go, .bt-d .bt-go { padding: 9px 16px; font-size: 13.5px; }
   .bt-a .bt-go { padding: 10px 18px; font-size: 14px; }
 }
+
+/* ---------- notice strip at the very top (index.html #siteNote): the header moves down below it ---------- */
+.site-note {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+  padding: 9px 48px 9px 16px; background: var(--gold); color: #0b2f1d; text-align: center;
+  font: 700 14px/1.4 Montserrat, system-ui, sans-serif; box-shadow: 0 2px 12px rgba(0, 0, 0, .18);
+}
+.site-note p { margin: 0; }
+.site-note a { color: #0b2f1d; font-weight: 900; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+.sn-x {
+  position: absolute; right: 10px; top: 50%; translate: 0 -50%; width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: rgba(11, 47, 29, .12); color: #0b2f1d; font-size: 18px; line-height: 1; cursor: pointer;
+}
+.sn-x:hover { background: rgba(11, 47, 29, .22); }
+body.has-note { padding-top: var(--note-h, 0px); }
+body.has-note .top { top: var(--note-h, 0px); }
+@media (max-width: 600px) { .site-note { font-size: 13px; padding: 8px 44px 8px 12px; } }

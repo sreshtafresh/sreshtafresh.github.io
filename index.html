@@ -12,9 +12,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <!-- ?v= is bumped on every update so browsers fetch the new file instead of an old saved copy -->
-  <link rel="stylesheet" href="style.css?v=20261121h">
+  <link rel="stylesheet" href="style.css?v=20261122a">
 </head>
 <body>
+  <!-- NOTICE while the shop isn't fully open yet (text editable in edit mode). To take it down, delete this block. -->
+  <div class="site-note" id="siteNote" role="status">
+    <p><span data-edit="notice.text">🚧 Our website is still being set up, and online ordering will start shortly. To order now, send an SMS to</span>
+      <a href="sms:+917788994449" data-sms>77889 94449</a></p>
+    <button type="button" class="sn-x" aria-label="Hide this message">×</button>
+  </div>
+  <script>
+    (function () {   // the header sits below the notice; hidden for the rest of the visit once closed
+      var n = document.getElementById('siteNote'), root = document.documentElement;
+      try { if (sessionStorage.getItem('sf_note_x')) { n.remove(); return; } } catch (e) { /* private mode */ }
+      document.body.classList.add('has-note');
+      var fit = function () { root.style.setProperty('--note-h', n.offsetHeight + 'px'); };
+      fit();
+      if (window.ResizeObserver) new ResizeObserver(fit).observe(n); else window.addEventListener('resize', fit);
+      n.querySelector('.sn-x').onclick = function () {
+        n.remove(); document.body.classList.remove('has-note'); root.style.setProperty('--note-h', '0px');
+        try { sessionStorage.setItem('sf_note_x', '1'); } catch (e) { /* private mode */ }
+      };
+    })();
+  </script>
   <!-- Header floats over the page: clear over the hero photo, then takes on the colour of the section beneath
        (data-tone on each section). The light logo shows over dark sections. -->
   <header class="top dark" id="top">
@@ -207,7 +227,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MotionPathPlugin.min.js"></script>
-  <script src="config.js?v=20261121h"></script>
-  <script src="app.js?v=20261121h"></script>
+  <script src="config.js?v=20261122a"></script>
+  <script src="app.js?v=20261122a"></script>
 </body>
 </html>
