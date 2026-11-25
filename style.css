@@ -1268,3 +1268,8 @@ body.has-note .hero { min-height: calc(100vh - var(--note-h, 0px)); min-height: 
 .stock-row .rate i { font-style: normal; color: var(--gold); }
 .stock-row .rate span { color: var(--muted); font-weight: 600; font-size: 12.5px; }
 .stock-row .rate:hover { text-decoration: underline; }
+
+/* ---------- chicken reservation card: a compact Reserve button, so "₹750 / kg" always shows in full ---------- */
+.item .buy .btn.res { flex: none; width: auto; min-width: 0; padding: 9px 14px; font-size: 13px; letter-spacing: .04em; }
+.item .buy .price { min-width: 0; }
+@media (max-width: 600px) { .item .buy .btn.res { width: 100%; padding: 10px 14px; } }   /* phones: price above, button full width */
