@@ -595,7 +595,32 @@
     G.fromTo(cards, { y: 40, opacity: 0, scale: .95 },
       { y: 0, opacity: 1, scale: 1, duration: .55, ease: 'power3.out', stagger: .07, delay: delay, clearProps: 'transform,opacity' });
   }
-  /** Landing intro: the text stays hidden until the produce cards have arrived from the shop (at most ~2.5 s),
+  /** A landing card tapped (anywhere but its + button): scroll down to that product in "Fresh from the farm today"
+   *  and outline it for a moment. key '' = the chicken reservation card. */
+  function goToItem(key) {
+    var find = function () {
+      return key ? $('grid').querySelector('.item[data-key="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]')
+        : $('grid').querySelector('[data-flip-id="chicken-pre"]');
+    };
+    var el = find();
+    if (!el && FILTER !== 'all' && CAT) { FILTER = 'all'; renderShop(); el = find(); }   // hidden by a category filter
+    el = el || $('view-shop');
+    el.scrollIntoView({ behavior: CALM ? 'auto' : 'smooth', block: el === $('view-shop') ? 'start' : 'center' });
+    if (el.classList.contains('item')) {
+      el.classList.remove('hl');
+      void el.offsetWidth;   // restart the outline if tapped again
+      el.classList.add('hl');
+      setTimeout(function () { el.classList.remove('hl'); }, 2400);
+    }
+  }
+  document.addEventListener('click', function (e) {
+    if (EDITING) return;
+    var card = e.target.closest('#heroItems .hc');
+    if (!card || e.target.closest('button, a')) return;
+    goToItem(card.dataset.key || '');
+  });
+
+  /** Landing intro: the text stays hidden until the produce cards have arrived from the shop (at most 0.6 s),
    *  then the headline words rise into place while the cards come in beside them. */
   var INTRO = { waiting: false, split: null, cards: false, timedOut: false };
   function introHeadline() {
