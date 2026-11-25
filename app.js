@@ -551,7 +551,6 @@
       '<span class="badge">Pre-book</span></div>' +
       '<div class="info"><div class="kicker">' + esc(CHICKEN) + '</div>' +
       '<div class="name-row"><div class="name">' + esc(c.name) + '</div><div class="sub">' + esc(c.when) + '</div></div>' +
-      '<div class="sub">Reserve now, priced by the weight you choose. Pay online now or when you receive it on Sunday.</div>' +
       '<div class="buy"><div class="price">' + (c.price ? '<b>' + rs(c.price) + '</b><span>/ kg</span>' : '<b>By weight</b>') + '</div>' +
       '<button class="btn gold res" data-act="pre"' + (c.open ? '' : ' disabled') + '>' + (c.open ? 'Reserve' : 'Opens soon') + '</button></div>' +
       '</div></div>';
