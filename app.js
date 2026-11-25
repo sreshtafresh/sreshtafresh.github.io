@@ -551,11 +551,11 @@
       (c.photo ? '<img src="' + esc(c.photo) + '" alt="' + esc(c.name) + '" loading="lazy" onerror="this.remove()">' : '') +
       '<span class="badge">Pre-book</span></div>' +
       '<div class="info"><div class="kicker">' + esc(CHICKEN) + '</div>' +
-      '<div class="name-row"><div class="name">' + esc(c.name) + '</div><div class="sub">' + esc(c.when) + '</div></div>' +
+      '<div class="name-row"><div class="name">' + esc(c.name) + '</div><div class="sub">' + esc(c.when) + (c.price ? ' · ' + rs(c.price) + ' / kg' : '') + '</div></div>' +
       // weight, like the pack size on other cards; Reserve opens with it already chosen
       '<select class="pack" data-act="prekg" aria-label="Weight"' + (c.open ? '' : ' disabled') + '>' +
       (PRE_KGS.indexOf(PRE.kg) < 0 ? PRE_KGS.concat([PRE.kg]).sort(function (a, b) { return a - b; }) : PRE_KGS).map(function (k) { return '<option value="' + k + '"' + (k === PRE.kg ? ' selected' : '') + '>' + q(k) + ' kg</option>'; }).join('') + '</select>' +
-      '<div class="buy"><div class="price">' + (c.price ? '<b>' + rs(Math.round(PRE.kg * c.price)) + '</b><span>' + rs(c.price) + ' / kg</span>' : '<b>By weight</b>') + '</div>' +
+      '<div class="buy"><div class="price">' + (c.price ? '<b>' + rs(Math.round(PRE.kg * c.price)) + '</b>' : '<b>By weight</b>') + '</div>' +
       '<button class="btn gold res" data-act="pre"' + (c.open ? '' : ' disabled') + '>' + (c.open ? 'Reserve' : 'Opens soon') + '</button></div>' +
       '</div></div>';
   }
@@ -608,7 +608,16 @@
     var el = find();
     if (!el && FILTER !== 'all' && CAT) { FILTER = 'all'; renderShop(); el = find(); }   // hidden by a category filter
     el = el || $('view-shop');
-    el.scrollIntoView({ behavior: CALM ? 'auto' : 'smooth', block: el === $('view-shop') ? 'start' : 'center' });
+    if (el === $('view-shop')) el.scrollIntoView({ behavior: CALM ? 'auto' : 'smooth', block: 'start' });
+    else {
+      // Centre the card in the part of the screen below the header. Measured from the card's resting place
+      // (offsetTop ignores the slide-in animation that may still be moving it).
+      var top = 0, n = el;
+      while (n) { top += n.offsetTop; n = n.offsetParent; }
+      var head = $('top') ? $('top').getBoundingClientRect().bottom : 0, room = innerHeight - head;
+      var y = el.offsetHeight < room ? top - head - (room - el.offsetHeight) / 2 : top - head - 12;   // too tall to centre: its top just below the header
+      window.scrollTo({ top: Math.max(0, y), behavior: CALM ? 'auto' : 'smooth' });
+    }
     if (el.classList.contains('item')) {
       el.classList.remove('hl');
       void el.offsetWidth;   // restart the outline if tapped again
