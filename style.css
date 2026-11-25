@@ -1248,3 +1248,12 @@ body.has-note .hero { min-height: calc(100vh - var(--note-h, 0px)); min-height: 
 @media (max-width: 860px) {
   body.has-note .hero-txt { min-height: calc(100vh - var(--top-h) - var(--note-h, 0px)); min-height: calc(100svh - var(--top-h) - var(--note-h, 0px)); }
 }
+
+/* ---------- landing: smaller "Shop all produce" button; on computers the card box is centred top-to-bottom in the white frame ---------- */
+.hero .btn.big { min-width: 0; padding: 14px 26px; font-size: clamp(14px, min(1vw, 1.9vh), 17px); border-radius: 10px; }
+@media (max-width: 860px) { .hero .btn.big { padding: 15px 18px; font-size: 15px; } }
+@media (min-width: 861px) {
+  /* the content area matches the frame (the frame is 4px inside it top and bottom), so equal padding = centred */
+  #landing > .band.hero { padding-bottom: calc(clamp(14px, 3.5vh, 40px) - 4px); }
+  .hero-in { padding-top: clamp(28px, 7vh, 88px); padding-bottom: clamp(28px, 7vh, 88px); }
+}
