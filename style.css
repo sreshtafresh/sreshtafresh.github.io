@@ -144,7 +144,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
   background:
     linear-gradient(rgba(11, 47, 29, 0) 72%, #0b2f1d 100%),   /* photo fades into the green behind the offer strip */
     linear-gradient(90deg, rgba(7, 30, 18, .93) 0%, rgba(7, 30, 18, .8) 38%, rgba(7, 30, 18, .5) 70%, rgba(7, 30, 18, .4) 100%),
-    var(--hero-img, url("images/2a7ea348-bc83-4c41-a1dd-9047a102624c.jpg")) center / cover no-repeat;
+    var(--hero-img, url("images/hero-fields.webp")) center / cover no-repeat;
 }
 /* thin white frame around the landing photo, just below the header */
 /* padding-bottom keeps the content clear of the frame's bottom line, even when the text makes the landing taller */
@@ -614,7 +614,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
   #landing > .band.hero {   /* phones: even tint so the text stays readable over the whole photo */
     background: linear-gradient(rgba(11, 47, 29, 0) 80%, #0b2f1d 100%),
       linear-gradient(rgba(7, 30, 18, .86), rgba(7, 30, 18, .78)),
-      var(--hero-img, url("images/2a7ea348-bc83-4c41-a1dd-9047a102624c.jpg")) center / cover no-repeat;
+      var(--hero-img, url("images/hero-fields.webp")) center / cover no-repeat;
   }
   .hero-grid { gap: 10px; }
 }

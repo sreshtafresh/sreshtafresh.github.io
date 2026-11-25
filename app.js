@@ -145,17 +145,19 @@
     return apiGet({ api: 'catalog' }).then(function (r) {
       if (!r.ok) throw new Error(r.error || 'Error');
       setCatalog(r.data, true);
+      store('sf_cat', { t: Date.now(), api: API, d: r.data });   // shown straight away on the next visit (see start)
     }).catch(function () {
       $('live').classList.add('off');
     }).then(function () { fetching = false; });
   }
 
-  function setCatalog(d, notify) {
+  /** savedAt: set when showing the copy saved on the last visit; it's never used to shrink the basket. */
+  function setCatalog(d, notify, savedAt) {
     CAT = d;
-    lastOk = Date.now();
+    lastOk = savedAt || Date.now();
     $('live').classList.remove('off');
     tick();
-    clampCart(notify);
+    if (!savedAt) clampCart(notify);
     if (!EDITING && JSON.stringify(d.site || {}) !== JSON.stringify(SITE)) applySite(d.site || {});   // edits published elsewhere
     var sig = JSON.stringify([d.items, d.chicken, d.shop.afterCutoff, d.banners, SITE]);
     var typing = EDITING && document.activeElement && document.activeElement.isContentEditable;   // don't redraw under the cursor
@@ -326,25 +328,25 @@
     var count = function (n, one, many) { return n + ' ' + (n === 1 ? one : many) + ' in today'; };
     var T = {};   // the four tiles by name; the saved order (edit mode) decides which slot each one fills
     T.chicken = { name: 'chicken',
-      photo: (ch && ch.photo) || (c && c.photo), em: '🐓', cut: 'images/bento-chicken.png',
+      photo: (ch && ch.photo) || (c && c.photo), em: '🐓', cut: 'images/bento-chicken.webp',
       tag: c && c.sunday && !CAT.shop.isSunday ? 'Pre-book for ' + fmtD(c.sunday) : 'Fresh this Sunday',
       title: 'Country Chicken', sub: 'From our farm, sold by weight. Pay online or when you receive it.',
       price: chPrice ? '<b>' + rs(chPrice) + '</b><span>/kg</span>' : '',
       btn: ch ? ' data-cat="' + esc(CHICKEN) + '" data-promo="1">Shop now →' : chOpen ? ' data-act="pre">Reserve now →' : (c ? ' disabled>Opens ' + esc(fmtD(c.opensOn)) : '')
     };
     T.eggs = { name: 'eggs',
-      photo: egg && egg.photo, em: '🥚', off: !egg, cut: 'images/bento-eggs.png', tag: egg ? '' : 'Back soon',
+      photo: egg && egg.photo, em: '🥚', off: !egg, cut: 'images/bento-eggs.webp', tag: egg ? '' : 'Back soon',
       title: 'Country Eggs', sub: egg ? 'From our own hens' : 'Sold out for today',
       price: egg ? '<b>' + rs(r2(egg.price * eggPack)) + '</b><span>' + esc(perPack(egg, eggPack)) + '</span>' : '',
       btn: egg ? ' data-cat="Eggs" data-promo="1">Shop now →' : ''
     };
     T.veggies = { name: 'veggies',
-      photo: veg[0] && veg[0].photo, em: '🥬', off: !veg.length, cut: 'images/bento-veggies.png',
+      photo: veg[0] && veg[0].photo, em: '🥬', off: !veg.length, cut: 'images/bento-veggies.webp',
       title: 'Veggies', sub: veg.length ? count(veg.length, 'vegetable', 'vegetables') : 'Back soon',
       btn: veg.length ? ' data-cat="Veggies" data-promo="1">Shop →' : ''
     };
     T.flowers = { name: 'flowers',
-      photo: flo[0] && flo[0].photo, em: '🌼', off: !flo.length, cut: 'images/bento-flowers.png',
+      photo: flo[0] && flo[0].photo, em: '🌼', off: !flo.length, cut: 'images/bento-flowers.webp',
       title: 'Flowers', sub: flo.length ? count(flo.length, 'kind', 'kinds') : 'Back soon',
       btn: flo.length ? ' data-cat="Flowers" data-promo="1">Shop →' : ''
     };
@@ -601,7 +603,7 @@
       INTRO.split = SplitText.create(h, { type: 'words', mask: 'words' });
       playIntro();
     });
-    setTimeout(function () { INTRO.timedOut = true; playIntro(); }, 2500);   // slow connection: don't keep the text back
+    setTimeout(function () { INTRO.timedOut = true; playIntro(); }, 600);   // first visit (nothing saved yet): don't keep the text back
   }
   function playIntro() {
     if (!INTRO.waiting || !INTRO.split || !(INTRO.cards || INTRO.timedOut)) return;
@@ -712,8 +714,8 @@
   // ---------- "From our fields" version 2: an uneven grid of vegetables, farm photos and growing details ----------
   // Farm photos for the grid (placeholders from the images folder until real farm photos are added).
   var FARM_PHOTOS = [
-    { src: 'images/2a7ea348-bc83-4c41-a1dd-9047a102624c.jpg', cap: 'Our fields, Yendada' },
-    { src: 'images/farm-2.jpg', cap: 'Sreshta Farms' }
+    { src: 'images/hero-fields.webp', cap: 'Our fields, Yendada' },
+    { src: 'images/farm-2.webp', cap: 'Sreshta Farms' }
   ];
   var MOSAIC_SIG = '';
   function mosaicVeg(it, size) {
@@ -2640,6 +2642,13 @@
   route();
   setupReveal();
   introHeadline();
+  // The shop's answer takes ~2 s (Apps Script). Meanwhile show what it said on the last visit (up to 12 hours old):
+  // text, cards and photos appear at once, and the fresh data replaces it as soon as it arrives.
+  (function () {
+    var saved = load('sf_cat', null);
+    if (!connected() || !saved || saved.api !== API || !saved.d || !(Date.now() - saved.t < 12 * 3600e3)) return;
+    try { setCatalog(saved.d, false, saved.t); } catch (e) { CAT = null; }   // an old format: just wait for the shop
+  })();
   if ($('spot')) {   // the spotlight section is saved for later (commented out in index.html)
     $('spot').addEventListener('mouseenter', function () { SPOT.hover = true; });   // no auto-advance while reading
     $('spot').addEventListener('mouseleave', function () { SPOT.hover = false; });
