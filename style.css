@@ -1239,3 +1239,12 @@ body.has-note .top { top: var(--note-h, 0px); }
   .hero-grid .hc:hover .hc-row, .hero-grid .hc:focus-within .hc-row { max-height: 70px; padding-top: 6px; opacity: 1; }
   .hero-grid .hc:hover .hc-off, .hero-grid .hc:focus-within .hc-off { opacity: 1; translate: 0 0; }
 }
+
+/* ---------- with the notice strip showing, the landing is one screen tall minus the strip, so its white frame fits ---------- */
+body.has-note .hero { min-height: calc(100vh - var(--note-h, 0px)); min-height: calc(100svh - var(--note-h, 0px)); }
+@media (min-width: 861px) {
+  body.has-note .hero { height: calc(100vh - var(--note-h, 0px)); height: calc(100svh - var(--note-h, 0px)); }
+}
+@media (max-width: 860px) {
+  body.has-note .hero-txt { min-height: calc(100vh - var(--top-h) - var(--note-h, 0px)); min-height: calc(100svh - var(--top-h) - var(--note-h, 0px)); }
+}
