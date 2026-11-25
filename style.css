@@ -1228,3 +1228,14 @@ body.has-note .top { top: var(--note-h, 0px); }
   100% { box-shadow: var(--shadow); }
 }
 @media (prefers-reduced-motion: reduce) { .item.hl { animation: none; box-shadow: 0 0 0 4px var(--gold); } }
+
+/* ---------- landing cards (computers with a mouse): only the name shows; price, + and the tag appear on hover ---------- */
+@media (min-width: 861px) and (hover: hover) {
+  .hero-grid .hc .hc-row {
+    max-height: 0; padding-top: 0; overflow: hidden; opacity: 0;
+    transition: max-height .3s ease, padding-top .3s ease, opacity .25s ease;
+  }
+  .hero-grid .hc .hc-off { opacity: 0; translate: 0 -6px; transition: opacity .25s ease, translate .25s ease; }
+  .hero-grid .hc:hover .hc-row, .hero-grid .hc:focus-within .hc-row { max-height: 70px; padding-top: 6px; opacity: 1; }
+  .hero-grid .hc:hover .hc-off, .hero-grid .hc:focus-within .hc-off { opacity: 1; translate: 0 0; }
+}
