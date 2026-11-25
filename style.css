@@ -234,7 +234,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
    and the photos stretch to fill each card's height. The text stays centred on the left. */
 @media (min-width: 861px) {
   /* hero is exactly one screen tall, so the box can't spill past it */
-  .hero { align-items: stretch; height: 100vh; height: 100svh; min-height: 640px; }
+  .hero { align-items: stretch; height: 100vh; height: 100svh; min-height: 460px; }   /* low minimum: a zoomed-in browser (shorter screen) still sees the whole frame */
   .hero-in { align-items: stretch; height: 100%; padding-top: clamp(36px, 8vh, 96px); padding-bottom: clamp(36px, 8vh, 96px); }
   .hero-txt { align-self: center; }
   .hero-items { width: 60%; display: flex; flex-direction: column; min-height: 0; }
