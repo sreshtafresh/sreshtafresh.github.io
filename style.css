@@ -610,7 +610,7 @@ body:not([data-view="shop"]) .top { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
   .hero-points li { font-size: clamp(14px, 3.8vw, 16px); padding: 10px 16px; }
   .hero .btn.big { padding: 20px 18px; font-size: clamp(16px, 4.4vw, 18px); border-radius: 10px; }
   .hero .btn.big { width: 100%; }
-  .hero-items { width: auto; margin-left: 0; padding: 12px; }
+  .hero-items { display: none; }   /* phones and tablets: no product cards on the landing screen; the shop is just below */
   #landing > .band.hero {   /* phones: even tint so the text stays readable over the whole photo */
     background: linear-gradient(rgba(11, 47, 29, 0) 80%, #0b2f1d 100%),
       linear-gradient(rgba(7, 30, 18, .86), rgba(7, 30, 18, .78)),
