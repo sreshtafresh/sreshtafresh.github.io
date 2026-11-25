@@ -1169,7 +1169,10 @@
       (sold ? '<span class="stamp">Out of stock</span>' : '') + '</div>' +
       '<div class="info"><div class="kicker">' + esc(it.category) + '</div>' +
       '<div class="name-row"><div class="name">' + esc(it.item) + '</div>' +
-      '<div class="sub' + (sold ? ' out' : low ? ' low' : '') + '">' + stock + '</div></div>' +
+      '<div class="stock-row"><div class="sub' + (sold ? ' out' : low ? ' low' : '') + '">' + stock + '</div>' +
+      // the star rating sits beside the stock (on the price line it slid under the Add button)
+      (it.rating ? '<button class="rate" data-act="reviews" aria-label="See reviews"><i>★</i> ' + it.rating.avg.toFixed(1) + ' <span>(' + it.rating.n + ')</span></button>' : '') +
+      '</div></div>' +
       (preBook ? '<div class="sub">Arrives ' + fmtD(CAT.chicken.sunday) + '</div>' : '') +
       '<select class="pack" data-act="pack" aria-label="Pack size"' + (sold ? ' disabled' : '') + '>' +
       (sold ? '<option>' + esc(packLabel(it, it.step)) + '</option>'
@@ -1179,7 +1182,6 @@
       '<div class="buy"><div class="price"><b>' + rs(r2(it.price * (sold ? 1 : p))) + '</b>' +
       (it.mrp > it.price ? '<s class="mrp" title="Market price">' + rs(r2(it.mrp * (sold ? 1 : p))) + '</s>' : '') +
       (sold ? '<span>/ per ' + (it.unit === 'pcs' ? 'piece' : it.unit) + '</span>' : '') +
-      (it.rating ? '<button class="rate" data-act="reviews" aria-label="See reviews"><i>★</i> ' + it.rating.avg.toFixed(1) + ' <span>(' + it.rating.n + ')</span></button>' : '') +
       '</div>' +
       (sold ? '<button class="btn out" disabled>Sold out</button>'
         : '<button class="btn gold" data-act="add"' + (full ? ' disabled' : '') + '>Add</button>') + '</div>' +

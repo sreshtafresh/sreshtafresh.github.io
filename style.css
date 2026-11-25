@@ -1257,3 +1257,14 @@ body.has-note .hero { min-height: calc(100vh - var(--note-h, 0px)); min-height: 
   #landing > .band.hero { padding-bottom: calc(clamp(14px, 3.5vh, 40px) - 4px); }
   .hero-in { padding-top: clamp(28px, 7vh, 88px); padding-bottom: clamp(28px, 7vh, 88px); }
 }
+
+/* ---------- produce cards: the star rating sits beside the stock line, under the name ---------- */
+.stock-row { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px; margin-top: 3px; }
+.stock-row .sub { margin-top: 0; }
+.stock-row .rate {
+  border: 0; background: none; padding: 0; cursor: pointer; white-space: nowrap;
+  font: 800 13.5px Montserrat, system-ui, sans-serif; color: var(--ink);
+}
+.stock-row .rate i { font-style: normal; color: var(--gold); }
+.stock-row .rate span { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+.stock-row .rate:hover { text-decoration: underline; }
