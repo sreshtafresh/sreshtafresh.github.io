@@ -542,6 +542,7 @@
       '<div class="hc-row"><span class="hc-price">' + (c.price ? '<b>' + rs(c.price) + '</b>' : '<b>By weight</b>') + '</span>' +
       '<button class="hc-add" data-act="pre" aria-label="Reserve country chicken"' + (c.open ? '' : ' disabled') + '>+</button></div></div></div>';
   }
+  var PRE_KGS = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5];   // weights offered on the card (the reservation window allows up to 20 kg)
   /** Full shop card */
   function chickenPreCard() {
     var c = chickenPreInfo();
@@ -551,7 +552,10 @@
       '<span class="badge">Pre-book</span></div>' +
       '<div class="info"><div class="kicker">' + esc(CHICKEN) + '</div>' +
       '<div class="name-row"><div class="name">' + esc(c.name) + '</div><div class="sub">' + esc(c.when) + '</div></div>' +
-      '<div class="buy"><div class="price">' + (c.price ? '<b>' + rs(c.price) + '</b><span>/ kg</span>' : '<b>By weight</b>') + '</div>' +
+      // weight, like the pack size on other cards; Reserve opens with it already chosen
+      '<select class="pack" data-act="prekg" aria-label="Weight"' + (c.open ? '' : ' disabled') + '>' +
+      (PRE_KGS.indexOf(PRE.kg) < 0 ? PRE_KGS.concat([PRE.kg]).sort(function (a, b) { return a - b; }) : PRE_KGS).map(function (k) { return '<option value="' + k + '"' + (k === PRE.kg ? ' selected' : '') + '>' + q(k) + ' kg</option>'; }).join('') + '</select>' +
+      '<div class="buy"><div class="price">' + (c.price ? '<b>' + rs(Math.round(PRE.kg * c.price)) + '</b><span>' + rs(c.price) + ' / kg</span>' : '<b>By weight</b>') + '</div>' +
       '<button class="btn gold res" data-act="pre"' + (c.open ? '' : ' disabled') + '>' + (c.open ? 'Reserve' : 'Opens soon') + '</button></div>' +
       '</div></div>';
   }
@@ -2643,6 +2647,12 @@
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
+    if (t.dataset && t.dataset.act === 'prekg') {   // chicken card: weight chosen, price follows
+      PRE.kg = Number(t.value) || 1;
+      t.blur();
+      renderGrid();
+      return;
+    }
     if (t.dataset && t.dataset.act === 'pack') {
       var card = t.closest('[data-key]');
       PACK[card.dataset.key] = Number(t.value);
