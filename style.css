@@ -1206,3 +1206,15 @@ main.legal { max-width: 760px; padding-bottom: 40px; }
 body.has-note { padding-top: var(--note-h, 0px); }
 body.has-note .top { top: var(--note-h, 0px); }
 @media (max-width: 600px) { .site-note { font-size: 13px; padding: 8px 44px 8px 12px; } }
+
+/* ---------- landing: 4 cards (chicken, eggs + 2), 2 × 2 on computers with bigger photos and text ---------- */
+@media (min-width: 861px) {
+  .hero-grid { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .hero-grid .hc .hc-body { padding: 48px clamp(12px, 1.2vw, 20px) clamp(12px, 1.2vw, 18px); }
+  .hero-grid .hc .hc-name { font-size: clamp(18px, 1.7vw, 30px); }
+  .hero-grid .hc .hc-row { padding-top: 6px; }
+  .hero-grid .hc .hc-price b { font-size: clamp(20px, 1.9vw, 32px); }
+  .hero-grid .hc .hc-price s { font-size: clamp(14px, 1.1vw, 18px); }
+  .hero-grid .hc .hc-add { width: clamp(38px, 3vw, 50px); height: clamp(38px, 3vw, 50px); font-size: clamp(22px, 1.9vw, 30px); border-radius: 12px; }
+  .hero-grid .hc-off { left: 14px; top: 14px; font-size: clamp(12px, 1vw, 15px); padding: 5px 11px; }
+}

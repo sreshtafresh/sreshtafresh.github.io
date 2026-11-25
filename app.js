@@ -569,12 +569,16 @@
       })
       .sort(function (a, b) { return b.first - a.first || b.score - a.score || a.n - b.n; })
       .map(function (x) { return x.it; });
-    return siteSort(ranked, 'hero').slice(0, 6);   // cards arranged in edit mode come first, in that order
+    // Four cards: country chicken and country eggs always (when in stock), then the best two others;
+    // the others follow the order arranged in edit mode.
+    var must = [CHICKEN, 'Eggs'].map(function (cat) { return ranked.filter(function (i) { return i.category === cat; })[0]; }).filter(Boolean);
+    var rest = siteSort(ranked.filter(function (i) { return must.indexOf(i) < 0; }), 'hero');
+    return must.concat(rest).slice(0, 4);
   }
   function renderHero() {
     var box = $('heroItems');
     if (!box) return;
-    var pre = chickenPending(), picks = heroPicks().slice(0, pre ? 5 : 6);   // the chicken reserve card takes the first spot
+    var pre = chickenPending(), picks = heroPicks().slice(0, pre ? 3 : 4);   // the chicken reserve card takes the first spot
     box.innerHTML = (picks.length || pre ? '<div class="hero-grid">' + (pre ? heroChickenCard() : '') + picks.map(function (it) { return smallCard(it, true); }).join('') + '</div>'
       : '<div class="hero-empty">Today\'s produce is loading…</div>');
     // First time the cards arrive while the landing is on screen: they rise in one after another.
