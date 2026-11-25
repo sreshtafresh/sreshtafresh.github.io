@@ -1209,6 +1209,7 @@ body.has-note .top { top: var(--note-h, 0px); }
 
 /* ---------- landing: 4 cards (chicken, eggs + 2), 2 × 2 on computers with bigger photos and text ---------- */
 @media (min-width: 861px) {
+  .hero-items { width: 85%; }   /* wider box, growing to the left (was 60%) */
   .hero-grid { grid-template-rows: repeat(2, minmax(0, 1fr)); }
   .hero-grid .hc .hc-body { padding: 48px clamp(12px, 1.2vw, 20px) clamp(12px, 1.2vw, 18px); }
   .hero-grid .hc .hc-name { font-size: clamp(18px, 1.7vw, 30px); }
